@@ -727,6 +727,29 @@
         .options-filter-btns{display:flex;gap:6px;flex-wrap:wrap;}
         .options-filter-btn{padding:5px 12px;border:1px solid var(--border);background:transparent;color:var(--text3);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all .15s;}
         .options-filter-btn.active{background:var(--bg3);color:var(--text);border-color:var(--text3);}
+        /* ===== OPTIONS ANALYSIS CARD ===== */
+        .options-analysis{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px;}
+        .options-anal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+        .options-anal-title{font-size:15px;font-weight:800;}
+        .options-anal-verdict{padding:5px 14px;border-radius:20px;font-size:13px;font-weight:800;}
+        .options-anal-verdict.bull{background:rgba(34,197,94,.15);color:var(--green);}
+        .options-anal-verdict.strong-bull{background:rgba(34,197,94,.2);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+        .options-anal-verdict.bear{background:rgba(239,68,68,.15);color:var(--red);}
+        .options-anal-verdict.strong-bear{background:rgba(239,68,68,.2);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+        .options-anal-verdict.neutral{background:var(--bg3);color:var(--text2);}
+        .options-anal-section-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+        .options-anal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+        @media(max-width:600px){.options-anal-grid{grid-template-columns:1fr 1fr;}}
+        .options-anal-item{background:var(--bg3);border-radius:var(--r3);padding:12px 14px;}
+        .options-anal-item-label{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;}
+        .options-anal-item-val{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;}
+        .options-anal-item-sub{font-size:10px;color:var(--text3);margin-top:3px;line-height:1.4;}
+        .options-anal-divider{height:1px;background:var(--border);margin:14px 0;}
+        .options-signals{display:flex;flex-direction:column;gap:8px;}
+        .options-signal-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--r3);}
+        .options-signal-icon{font-size:13px;flex-shrink:0;margin-top:1px;}
+        .options-signal-text{flex:1;font-size:13px;color:var(--text2);font-weight:600;line-height:1.5;}
+        .options-signal-text strong{color:var(--text);font-weight:700;}
         .options-filter-label{font-size:12px;color:var(--text3);font-weight:600;white-space:nowrap;}
         /* 자동 분석 갱신 바 */
         .analysis-refresh-bar{display:flex;align-items:center;gap:7px;padding:7px 16px 4px;font-size:12px;color:var(--text3);flex-wrap:wrap;}
@@ -1203,6 +1226,8 @@
                     <div class="options-exp-bar" id="optionsExpBar"></div>
                     <!-- 요약 통계 -->
                     <div class="options-summary-row" id="optionsSummary"></div>
+                    <!-- 옵션 시장 분석 -->
+                    <div id="optionsAnalysis"></div>
                     <!-- 필터 -->
                     <div class="options-toggle-row">
                         <span id="optionsCurrentExp" style="font-size:13px;font-weight:700;color:var(--text);"></span>
@@ -5326,6 +5351,135 @@ Rules:
                     <span style="color:var(--red)">${fmtK(totalPutVol)}</span>
                 </div>
             </div>`;
+        renderOptionsAnalysis();
+    }
+
+    function renderOptionsAnalysis() {
+        const el = document.getElementById('optionsAnalysis');
+        if (!el) return;
+        const calls = _optionsAllCalls;
+        const puts  = _optionsAllPuts;
+        const price = _optionsCurrentPrice;
+        if (!calls.length && !puts.length) { el.innerHTML = ''; return; }
+
+        // ─── 기본 지표 계산 ───
+        const totalCallOI  = calls.reduce((s, o) => s + (o.openInterest || 0), 0);
+        const totalPutOI   = puts.reduce((s, o)  => s + (o.openInterest || 0), 0);
+        const totalCallVol = calls.reduce((s, o) => s + (o.volume || 0), 0);
+        const totalPutVol  = puts.reduce((s, o)  => s + (o.volume || 0), 0);
+        const pcrOI  = totalCallOI  > 0 ? totalPutOI  / totalCallOI  : null;
+        const pcrVol = totalCallVol > 0 ? totalPutVol / totalCallVol : null;
+
+        // ─── Max Pain 계산 ───
+        const allStrikes = [...new Set([...calls.map(o => o.strike), ...puts.map(o => o.strike)])].sort((a,b) => a - b);
+        let maxPain = null;
+        if (allStrikes.length) {
+            let minPain = Infinity;
+            for (const p of allStrikes) {
+                let pain = 0;
+                for (const c of calls) pain += Math.max(0, p - c.strike) * (c.openInterest || 0);
+                for (const u of puts)  pain += Math.max(0, u.strike - p) * (u.openInterest || 0);
+                if (pain < minPain) { minPain = pain; maxPain = p; }
+            }
+        }
+
+        // ─── 콜 월 / 풋 월 ───
+        const callWall = calls.reduce((b, o) => (!b || (o.openInterest||0) > (b.openInterest||0)) ? o : b, null);
+        const putWall  = puts.reduce((b, o)  => (!b || (o.openInterest||0) > (b.openInterest||0)) ? o : b, null);
+
+        // ─── IV 스큐 (OTM 풋 IV / OTM 콜 IV) ───
+        const otmCalls = calls.filter(o => !o.inTheMoney && (o.impliedVolatility||0) > 0);
+        const otmPuts  = puts.filter(o  => !o.inTheMoney && (o.impliedVolatility||0) > 0);
+        const avgCallIV = otmCalls.length ? otmCalls.reduce((s,o) => s + o.impliedVolatility, 0) / otmCalls.length : null;
+        const avgPutIV  = otmPuts.length  ? otmPuts.reduce((s,o)  => s + o.impliedVolatility, 0) / otmPuts.length  : null;
+        const ivSkew = (avgCallIV && avgPutIV) ? avgPutIV / avgCallIV : null;
+
+        // ─── 시그널 & 스코어링 ───
+        let bullScore = 0, bearScore = 0;
+        const signals = [];
+
+        // PCR(OI) 시그널
+        if (pcrOI !== null) {
+            if      (pcrOI < 0.5)  { bullScore += 3; signals.push({t:'bull', m:`PCR(OI) <strong>${pcrOI.toFixed(2)}</strong> — 강한 콜 우세, 시장 낙관론`}); }
+            else if (pcrOI < 0.7)  { bullScore += 2; signals.push({t:'bull', m:`PCR(OI) <strong>${pcrOI.toFixed(2)}</strong> — 콜 우세, 상승 기대 높음`}); }
+            else if (pcrOI < 1.0)  { bullScore += 1; signals.push({t:'neutral', m:`PCR(OI) <strong>${pcrOI.toFixed(2)}</strong> — 콜 소폭 우세, 중립에 가까운 상승`}); }
+            else if (pcrOI < 1.3)  { bearScore += 1; signals.push({t:'neutral', m:`PCR(OI) <strong>${pcrOI.toFixed(2)}</strong> — 풋 소폭 우세, 중립에 가까운 하락`}); }
+            else if (pcrOI < 1.7)  { bearScore += 2; signals.push({t:'bear',    m:`PCR(OI) <strong>${pcrOI.toFixed(2)}</strong> — 풋 우세, 하락 헤지 증가`}); }
+            else                   { bearScore += 3; signals.push({t:'bear',    m:`PCR(OI) <strong>${pcrOI.toFixed(2)}</strong> — 강한 풋 우세, 하락 방어 심화`}); }
+        }
+
+        // 거래량 시그널
+        if (pcrVol !== null) {
+            if      (pcrVol < 0.7) { bullScore += 2; signals.push({t:'bull',    m:`콜 거래량 우세 (<strong>${totalCallVol.toLocaleString()} vs ${totalPutVol.toLocaleString()}</strong>) — 매수 모멘텀`}); }
+            else if (pcrVol > 1.4) { bearScore += 2; signals.push({t:'bear',    m:`풋 거래량 우세 (<strong>${totalPutVol.toLocaleString()} vs ${totalCallVol.toLocaleString()}</strong>) — 하락 베팅 증가`}); }
+            else                   {                  signals.push({t:'neutral', m:`콜/풋 거래량 균형 (<strong>${totalCallVol.toLocaleString()} / ${totalPutVol.toLocaleString()}</strong>) — 방향성 중립`}); }
+        }
+
+        // Max Pain 시그널
+        if (maxPain !== null && price) {
+            const diffPct = (price - maxPain) / maxPain * 100;
+            if      (diffPct >  3) { bearScore += 1; signals.push({t:'bear',    m:`맥스 페인 <strong>$${maxPain}</strong> — 현재가 ${diffPct.toFixed(1)}% 위, 만기 시 하방 압력 가능`}); }
+            else if (diffPct < -3) { bullScore += 1; signals.push({t:'bull',    m:`맥스 페인 <strong>$${maxPain}</strong> — 현재가 ${Math.abs(diffPct).toFixed(1)}% 아래, 만기 시 상방 압력 가능`}); }
+            else                   {                  signals.push({t:'neutral', m:`맥스 페인 <strong>$${maxPain}</strong> — 현재가 근접, 균형 상태`}); }
+        }
+
+        // IV 스큐 시그널
+        if (ivSkew !== null) {
+            if      (ivSkew > 1.2) { bearScore += 1; signals.push({t:'bear', m:`풋 IV 스큐 <strong>${ivSkew.toFixed(2)}x</strong> — OTM 풋 변동성 높음, 하락 리스크 경계`}); }
+            else if (ivSkew < 0.8) { bullScore += 1; signals.push({t:'bull', m:`콜 IV 스큐 <strong>${(1/ivSkew).toFixed(2)}x</strong> — OTM 콜 변동성 높음, 상승 기대 반영`}); }
+        }
+
+        // ─── 종합 판단 ───
+        const gap = bullScore - bearScore;
+        let verdictText, verdictClass;
+        if      (gap >= 4)  { verdictText = '🚀 강한 매수'; verdictClass = 'strong-bull'; }
+        else if (gap >= 2)  { verdictText = '📈 매수 우세'; verdictClass = 'bull'; }
+        else if (gap <= -4) { verdictText = '🔻 강한 매도'; verdictClass = 'strong-bear'; }
+        else if (gap <= -2) { verdictText = '📉 매도 우세'; verdictClass = 'bear'; }
+        else                { verdictText = '⚖️ 중립';     verdictClass = 'neutral'; }
+
+        const icon = t => t === 'bull' ? '🟢' : t === 'bear' ? '🔴' : '🟡';
+        const fmtOI = v => v ? v.toLocaleString() : '-';
+
+        el.innerHTML = `
+        <div class="options-analysis">
+            <div class="options-anal-header">
+                <div class="options-anal-title">옵션 시장 분석</div>
+                <div class="options-anal-verdict ${verdictClass}">${verdictText}</div>
+            </div>
+            <div class="options-anal-section-title">주요 가격 레벨</div>
+            <div class="options-anal-grid">
+                <div class="options-anal-item">
+                    <div class="options-anal-item-label">맥스 페인</div>
+                    <div class="options-anal-item-val">${maxPain != null ? '$' + maxPain.toFixed(0) : '-'}</div>
+                    <div class="options-anal-item-sub">만기 시 옵션 매도자 최대 이익 구간</div>
+                </div>
+                <div class="options-anal-item">
+                    <div class="options-anal-item-label">IV 스큐 (풋/콜)</div>
+                    <div class="options-anal-item-val" style="color:${ivSkew > 1.15 ? 'var(--red)' : ivSkew < 0.85 ? 'var(--green)' : 'var(--text)'}">${ivSkew != null ? ivSkew.toFixed(2) + 'x' : '-'}</div>
+                    <div class="options-anal-item-sub">${ivSkew > 1.15 ? '풋 IV 높음 → 하락 경계' : ivSkew != null && ivSkew < 0.85 ? '콜 IV 높음 → 상승 기대' : '균형'}</div>
+                </div>
+                <div class="options-anal-item">
+                    <div class="options-anal-item-label">콜 월 (저항선)</div>
+                    <div class="options-anal-item-val" style="color:var(--green)">${callWall ? '$' + callWall.strike : '-'}</div>
+                    <div class="options-anal-item-sub">OI ${fmtOI(callWall?.openInterest)} — 강한 저항 예상</div>
+                </div>
+                <div class="options-anal-item">
+                    <div class="options-anal-item-label">풋 월 (지지선)</div>
+                    <div class="options-anal-item-val" style="color:var(--red)">${putWall ? '$' + putWall.strike : '-'}</div>
+                    <div class="options-anal-item-sub">OI ${fmtOI(putWall?.openInterest)} — 강한 지지 예상</div>
+                </div>
+            </div>
+            <div class="options-anal-divider"></div>
+            <div class="options-anal-section-title">시그널 분석</div>
+            <div class="options-signals">
+                ${signals.map(s => `
+                <div class="options-signal-row">
+                    <span class="options-signal-icon">${icon(s.t)}</span>
+                    <span class="options-signal-text">${s.m}</span>
+                </div>`).join('')}
+            </div>
+        </div>`;
     }
 
     function renderOptionsChain() {
