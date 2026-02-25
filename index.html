@@ -38,7 +38,7 @@
         @media(min-width:768px){.app{display:grid;grid-template-columns:1fr;}}
 
         /* ===== SIDE NAV ===== */
-        .side-nav{position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);border-left:1px solid var(--border);z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden;}
+        .side-nav{position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--bg2);border-left:1px solid var(--border);z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden;padding-top:env(safe-area-inset-top);}
         .side-nav.open{transform:translateX(0);}
         .side-nav-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:199;opacity:0;pointer-events:none;transition:opacity .28s ease;}
         .side-nav-backdrop.show{opacity:1;pointer-events:auto;}
@@ -92,7 +92,7 @@
         }
 
         /* ===== HEADER - 토스증권 스타일 ===== */
-        .header{position:sticky;top:0;z-index:100;background:color-mix(in srgb, var(--bg) 92%, transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:16px 20px 12px;}
+        .header{position:sticky;top:0;z-index:100;background:color-mix(in srgb, var(--bg) 92%, transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:16px 20px 12px;padding-top:calc(16px + env(safe-area-inset-top));}
         .header-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
         .logo{font-size:20px;font-weight:800;letter-spacing:-0.8px;flex-shrink:0;}
         .logo span{color:var(--blue);font-weight:800;}
