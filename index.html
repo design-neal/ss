@@ -507,8 +507,6 @@
             .search-box{min-width:0;} /* flex 아이템이 내용 크기 이하로 축소 가능하도록 */
             .search-box input{font-size:16px;padding:9px 8px;min-width:0;} /* 16px → iOS 자동 확대 방지 */
             .search-btn{padding:9px 16px;font-size:14px;font-weight:800;flex-shrink:0;white-space:nowrap;}
-            .market-btn{padding:6px 12px;font-size:13px;}
-            .market-toggle{flex-shrink:0;}
 
             /* ----- Welcome screen ----- */
             .welcome-top{padding:50px 16px 32px;}
@@ -776,13 +774,9 @@
         <div class="header-top">
             <div class="logo" onclick="goHome()" style="cursor:pointer;">Stock<span>AI</span></div>
             <div class="search-wrap">
-                <div class="market-toggle">
-                    <button class="market-btn" data-market="KR" onclick="setMarket('KR')">한국</button>
-                    <button class="market-btn active" data-market="US" onclick="setMarket('US')">미국</button>
-                </div>
                 <div class="search-box">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                    <input type="text" id="searchInput" placeholder="종목코드 또는 종목명 입력" onkeydown="if(event.key==='Enter')searchStock()">
+                    <input type="text" id="searchInput" placeholder="종목 입력 (예: 삼성전자, AAPL, 005930)" onkeydown="if(event.key==='Enter')searchStock()">
                 </div>
                 <button class="search-btn" onclick="searchStock()">분석</button>
             </div>
@@ -1769,6 +1763,33 @@
     };
 
     // Search by name (reverse lookup)
+    // 입력어로 마켓 자동 감지 (KR / US)
+    function autoDetectMarket(query) {
+        const q = query.trim();
+        // 6자리 숫자 → 한국 종목코드
+        if (/^\d{6}$/.test(q)) return 'KR';
+        // 한국 종목명 정확 매칭
+        for (const [, name] of Object.entries(KR_STOCK_NAMES)) {
+            if (name === q || name.toLowerCase() === q.toLowerCase()) return 'KR';
+        }
+        // 영문 티커 (알파벳/점/하이픈) → 미국
+        if (/^[A-Za-z.\-]+$/.test(q)) return 'US';
+        // 미국 종목 한글명 정확 매칭
+        if (US_STOCK_NAMES[q]) return 'US';
+        for (const [name] of Object.entries(US_STOCK_NAMES)) {
+            if (name.toLowerCase() === q.toLowerCase()) return 'US';
+        }
+        // 한국 종목명 부분 매칭
+        for (const [, name] of Object.entries(KR_STOCK_NAMES)) {
+            if (name.includes(q)) return 'KR';
+        }
+        // 미국 종목 한글명 부분 매칭
+        for (const [name] of Object.entries(US_STOCK_NAMES)) {
+            if (name.includes(q)) return 'US';
+        }
+        return 'US'; // 기본값
+    }
+
     function findKRCode(query) {
         const q = query.trim();
         if (/^\d{6}$/.test(q)) return q;
@@ -1868,6 +1889,10 @@
     async function searchStock() {
         let query = document.getElementById('searchInput').value.trim();
         if (!query) { showToast('종목코드 또는 종목명을 입력해주세요.'); return; }
+
+        // 마켓 자동 감지
+        currentMarket = autoDetectMarket(query);
+        document.querySelectorAll('.market-btn').forEach(b => b.classList.toggle('active', b.dataset.market === currentMarket));
 
         let symbol;
         if (currentMarket === 'KR') {
