@@ -624,6 +624,14 @@
         .options-filter-btn{padding:5px 12px;border:1px solid var(--border);background:transparent;color:var(--text3);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all .15s;}
         .options-filter-btn.active{background:var(--bg3);color:var(--text);border-color:var(--text3);}
         .options-filter-label{font-size:12px;color:var(--text3);font-weight:600;white-space:nowrap;}
+        /* 자동 분석 갱신 바 */
+        .analysis-refresh-bar{display:flex;align-items:center;gap:7px;padding:7px 16px 4px;font-size:12px;color:var(--text3);flex-wrap:wrap;}
+        .analysis-refresh-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulseGreen 2.4s ease-in-out infinite;}
+        @keyframes pulseGreen{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.75);}}
+        .analysis-refresh-time{font-weight:700;color:var(--text2);}
+        .analysis-refresh-btn{margin-left:auto;padding:3px 10px;border:1px solid var(--border);background:transparent;color:var(--text3);border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;font-family:inherit;transition:all .15s;}
+        .analysis-refresh-btn:hover{background:var(--bg3);color:var(--text);border-color:var(--text3);}
+        .analysis-refresh-btn.spinning{pointer-events:none;opacity:.6;}
         .opt-th-sort{cursor:pointer;user-select:none;}
         .opt-th-sort:hover{color:var(--text)!important;}
         .opt-sort-icon{font-size:10px;opacity:.35;margin-left:2px;}
@@ -908,6 +916,15 @@
                 </button>
             </div>
 
+            <!-- 자동 분석 갱신 바 -->
+            <div class="analysis-refresh-bar" id="analysisRefreshBar" style="display:none;">
+                <span class="analysis-refresh-dot"></span>
+                <span>5분마다 자동 갱신</span>
+                <span>·</span>
+                <span class="analysis-refresh-time" id="analysisRefreshTime">-</span>
+                <button class="analysis-refresh-btn" id="analysisRefreshBtn" onclick="manualAnalysisRefresh()">↻ 지금 갱신</button>
+            </div>
+
             <!-- ===== 단타 분석 ===== -->
             <div class="trade-style-panel active" id="tsPanelDay" data-tstyle="day">
                 <div class="tab-col-left">
@@ -1128,7 +1145,8 @@
     let currentInterval = '1d';
     let currentSymbol = '';
     let currentFullSymbol = '';  // Yahoo Finance용 풀 심볼 (예: NVDA, 005930.KS)
-    let liveUpdateTimer = null;  // 실시간 업데이트 타이머
+    let liveUpdateTimer      = null;  // 실시간 가격 업데이트 타이머 (30초)
+    let analysisRefreshTimer = null;  // 분석 자동 갱신 타이머 (5분)
     let rsiChart = null;
     let macdChart = null;
     let stochChart = null;
@@ -1567,6 +1585,7 @@
         currentFullSymbol = '';
         stockData = null;
         stopLiveUpdate();
+        stopAnalysisRefresh();
         // 캐시 있으면 즉시 렌더, 없으면 스켈레톤 + 프리로드
         loadTop100();
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1821,6 +1840,8 @@
 
             // 실시간 가격 업데이트 시작 (30초 간격)
             startLiveUpdate();
+            // 분석 자동 갱신 시작 (5분 간격)
+            startAnalysisRefresh();
 
         } catch(err) {
             showToast(err.message || '데이터를 불러오는데 실패했습니다.');
@@ -2015,6 +2036,64 @@
         } catch(e) {
             // 실패해도 무시 - 메인 기능에 영향 없음
         }
+    }
+
+    // ========================================
+    // Analysis Auto-Refresh (5분 자동 분석 갱신)
+    // ========================================
+    function updateAnalysisTimestamp() {
+        const el = document.getElementById('analysisRefreshTime');
+        if (!el) return;
+        const now = new Date();
+        const hh  = now.getHours().toString().padStart(2, '0');
+        const mm  = now.getMinutes().toString().padStart(2, '0');
+        el.textContent = `마지막 갱신 ${hh}:${mm}`;
+    }
+
+    function stopAnalysisRefresh() {
+        if (analysisRefreshTimer) { clearInterval(analysisRefreshTimer); analysisRefreshTimer = null; }
+        const bar = document.getElementById('analysisRefreshBar');
+        if (bar) bar.style.display = 'none';
+    }
+
+    async function runAnalysisRefresh() {
+        if (!currentFullSymbol) return;
+        try {
+            const chartUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${currentFullSymbol}` +
+                `?range=${currentPeriod}&interval=${currentInterval}&includePrePost=true`;
+            const data = await fetchWithProxy(chartUrl);
+            if (!data.chart?.result?.[0]) return;
+            stockData = data.chart.result[0];
+
+            // 분석 관련 함수만 재실행 (차트 전체 재렌더 제외 → 줌/팬 유지)
+            renderTechnicalIndicators();
+            renderRSIChart();
+            renderMACDChart();
+            renderStochChart();
+            renderADXChart();
+            renderCCIChart();
+            renderOBVChart();
+            renderEntryTiming();
+            renderExitTiming();
+            renderAIAnalysis();
+            renderVolumeChart();
+            updateAnalysisTimestamp();
+        } catch(e) { /* 네트워크 오류 시 조용히 무시 */ }
+    }
+
+    async function manualAnalysisRefresh() {
+        const btn = document.getElementById('analysisRefreshBtn');
+        if (btn) { btn.classList.add('spinning'); btn.textContent = '갱신 중...'; }
+        await runAnalysisRefresh();
+        if (btn) { btn.classList.remove('spinning'); btn.textContent = '↻ 지금 갱신'; }
+    }
+
+    function startAnalysisRefresh() {
+        stopAnalysisRefresh();
+        const bar = document.getElementById('analysisRefreshBar');
+        if (bar) bar.style.display = 'flex';
+        updateAnalysisTimestamp(); // 분석 직후 초기 타임스탬프 설정
+        analysisRefreshTimer = window.setInterval(runAnalysisRefresh, 5 * 60 * 1000); // 5분
     }
 
     // ========================================
@@ -5216,7 +5295,8 @@ Rules:
         setDrawTool, setDrawColor, setDrawWidth, undoDraw, clearAllDrawings,
         toggleTheme, switchTradeStyle, showLoading, hideLoading, showToast,
         loadOptionsDate, setOptionsFilter,
-        setOptionsStrikeRange, toggleOptionsVolFilter, sortOptionsBy
+        setOptionsStrikeRange, toggleOptionsVolFilter, sortOptionsBy,
+        manualAnalysisRefresh
     });
     </script>
 </body>
