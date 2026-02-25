@@ -2,7 +2,10 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>StockAI - 주식 종목 분석</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
@@ -184,7 +187,7 @@
         /* ===== MARKET SESSION (프리/애프터) ===== */
         .market-session-info{display:none;margin-top:14px;}
         .market-session-info.show{display:flex;gap:10px;flex-wrap:wrap;}
-        .session-badge{display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:var(--r3);padding:10px 14px;flex:1;min-width:180px;}
+        .session-badge{display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:var(--r3);padding:10px 14px;flex:1;min-width:min(180px,42vw);}
         .session-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;animation:pulse-dot 2s infinite;}
         .session-dot.pre{background:#a78bfa;}
         .session-dot.post{background:#f59e0b;}
@@ -200,9 +203,10 @@
         .session-time{font-size:10px;color:var(--text3);margin-top:2px;}
 
         /* ===== TAB NAVIGATION - 토스 스타일 ===== */
-        .tab-nav{display:none;position:sticky;top:0;z-index:90;background:color-mix(in srgb, var(--bg) 95%, transparent);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;}
+        .tab-nav{display:none;position:sticky;top:0;z-index:90;background:color-mix(in srgb, var(--bg) 95%, transparent);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+        .tab-nav::-webkit-scrollbar{display:none;}
         .tab-nav.show{display:flex;}
-        .tab-item{padding:14px 4px;margin-right:24px;font-size:15px;font-weight:700;color:var(--text3);cursor:pointer;border-bottom:2.5px solid transparent;transition:all .2s;font-family:inherit;background:none;border-top:none;border-left:none;border-right:none;}
+        .tab-item{padding:14px 4px;margin-right:24px;font-size:15px;font-weight:700;color:var(--text3);cursor:pointer;border-bottom:2.5px solid transparent;transition:all .2s;font-family:inherit;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;flex-shrink:0;}
         .tab-item.active{color:var(--text);border-bottom-color:var(--text);}
         .tab-item:hover:not(.active){color:var(--text2);}
 
@@ -499,19 +503,113 @@
             .tv-chart-wrap{height:700px;}
         }
 
-        /* ===== MOBILE ===== */
+        /* ===== MOBILE (≤640px) ===== */
         @media(max-width:640px){
+            /* ----- Header ----- */
+            .header{padding:10px 12px 8px;}
+            .header-top{gap:8px;margin-bottom:10px;}
+            .logo{font-size:17px;}
+            .market-btn{padding:5px 10px;font-size:12px;}
+            .search-box input{font-size:16px;padding:8px 6px;} /* 16px → iOS 자동 확대 방지 */
+            .search-btn{padding:8px 14px;font-size:13px;}
+
+            /* ----- Welcome screen ----- */
+            .welcome-top{padding:50px 16px 32px;}
+            .welcome-screen h2{font-size:22px;}
+            .welcome-screen p{font-size:13px;margin-bottom:24px;}
+            .example-chip{padding:10px 16px;font-size:13px;}
+
+            /* ----- Top 100 ----- */
+            .top100-section{padding:0 10px;}
+            .top100-title{font-size:15px;}
+            .top100-row{grid-template-columns:28px 1fr 72px 64px;padding:8px 10px;gap:6px;}
+            .top100-row-head{display:none;}
+            .top100-vol{display:none;}
+            .skel-row{grid-template-columns:28px 1fr 72px 64px;padding:7px 10px;}
+            .skel-vol{display:none;}
+            .top100-symbol{font-size:13px;}
+            .top100-price{font-size:13px;}
+            .top100-change{font-size:12px;}
+
+            /* ----- Stock hero ----- */
+            .stock-hero{padding:18px 16px 12px;}
             .stock-name{font-size:18px;}
-            .stock-price{font-size:34px;}
-            .tv-chart-wrap{height:420px;}
+            .stock-code{font-size:12px;}
+            .stock-price{font-size:32px;letter-spacing:-1.5px;margin-top:8px;}
+            .stock-change{font-size:14px;margin-top:4px;}
+
+            /* ----- Session badges ----- */
+            .session-badge{min-width:0;padding:8px 10px;gap:6px;}
+            .session-price{font-size:13px;}
+            .session-change{font-size:11px;}
+
+            /* ----- Tab nav ----- */
+            .tab-nav{padding:0 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+            .tab-nav::-webkit-scrollbar{display:none;}
+            .tab-item{padding:12px 10px;margin-right:2px;font-size:13px;white-space:nowrap;flex-shrink:0;}
+
+            /* ----- Cards ----- */
+            .card{margin:4px 10px;padding:16px;}
+            .card-title{font-size:14px;margin-bottom:12px;}
+
+            /* ----- Chart ----- */
+            .tv-chart-wrap{height:340px;}
+            .chart-toolbar{padding:6px 8px;gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;scrollbar-width:none;}
+            .chart-toolbar::-webkit-scrollbar{display:none;}
+            .chart-tb-btn{padding:4px 8px;font-size:11px;flex-shrink:0;}
+            .chart-tb-label{font-size:10px;flex-shrink:0;}
+            .chart-toolbar-divider{margin:0 3px;}
+            .draw-toolbar{padding:5px 8px;gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;scrollbar-width:none;}
+            .draw-toolbar::-webkit-scrollbar{display:none;}
+
+            /* ----- AI score & analysis ----- */
+            .ai-score-container{flex-direction:column;align-items:flex-start;gap:14px;}
+            .ai-score-circle{width:82px;height:82px;}
+            .ai-score-number{font-size:24px;}
+            .ai-recommendation{font-size:19px;}
+            .ai-summary{font-size:13px;}
             .indicator-grid{grid-template-columns:repeat(2,1fr);}
-            .card{margin:4px 12px;padding:18px;}
-            .ai-score-circle{width:90px;height:90px;}
-            .ai-score-number{font-size:26px;}
-            .sub-chart-grid .card{margin:4px 12px;}
-            .chart-toolbar{padding:8px 10px;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;}
-            .chart-tb-btn{padding:4px 8px;font-size:11px;}
-            .chart-tb-label{font-size:10px;}
+            .indicator-item{padding:12px 10px;}
+            .indicator-val{font-size:14px;}
+            .ai-detail-item{padding:12px;}
+
+            /* ----- Entry / Exit cards ----- */
+            .entry-icon{font-size:38px;}
+            .entry-title{font-size:20px;}
+            .entry-subtitle{font-size:13px;}
+            .entry-check-item{padding:10px;gap:8px;font-size:12px;}
+            .entry-check-icon{width:20px;height:20px;font-size:10px;}
+            .entry-strategy{padding:12px;}
+            .entry-strategy-row{font-size:12px;}
+            .entry-conditions-summary{gap:14px;}
+
+            /* ----- Sub charts ----- */
+            .sub-chart-container{height:120px;}
+            .sub-chart-grid .card{margin:4px 10px;}
+
+            /* ----- Trade style tabs ----- */
+            .trade-style-tabs{margin:4px 10px 0;padding:5px 8px;gap:5px;}
+            .trade-style-tab{font-size:12px;padding:10px 8px;gap:4px;}
+            .trade-style-tab svg{width:13px;height:13px;}
+
+            /* ----- Options ----- */
+            .options-wrap{padding:12px 0 24px;}
+            .options-toggle-row{padding:0 12px;}
+            .options-summary-row{padding:0 12px;}
+            .options-exp-bar{padding:0 12px 10px;}
+            .opt-tbl th,.opt-tbl td{padding:5px 5px;font-size:11px;}
+            .opt-strike{font-size:11px;}
+            .opt-iv{font-size:10px;}
+            .options-chain-grid{padding:0 10px;}
+
+            /* ----- Analysis refresh bar ----- */
+            .analysis-refresh-bar{padding:5px 12px 2px;font-size:11px;gap:5px;}
+            .analysis-refresh-btn{padding:2px 8px;font-size:10px;}
+
+            /* ----- Company info ----- */
+            .cp-info-grid{grid-template-columns:1fr;}
+            .cp-info-row{border-right:none!important;}
+            .cp-insider-table th,.cp-insider-table td{font-size:11px;padding:7px 7px;}
         }
 
 
