@@ -681,8 +681,8 @@
             <div class="logo" onclick="goHome()" style="cursor:pointer;">Stock<span>AI</span></div>
             <div class="search-wrap">
                 <div class="market-toggle">
-                    <button class="market-btn active" data-market="KR" onclick="setMarket('KR')">한국</button>
-                    <button class="market-btn" data-market="US" onclick="setMarket('US')">미국</button>
+                    <button class="market-btn" data-market="KR" onclick="setMarket('KR')">한국</button>
+                    <button class="market-btn active" data-market="US" onclick="setMarket('US')">미국</button>
                 </div>
                 <div class="search-box">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -1140,7 +1140,7 @@
     // ========================================
     // State
     // ========================================
-    let currentMarket = 'KR';
+    let currentMarket = 'US';
     let currentPeriod = '6mo';
     let currentInterval = '1d';
     let currentSymbol = '';
@@ -1190,8 +1190,7 @@
     document.getElementById('sideNavBackdrop')?.addEventListener('click', function() {
         closeSideNav();
     });
-    // 데스크탑(1024px+)에서는 페이지 로드 시 사이드바 자동 열기
-    if (window.innerWidth >= 1024) openSideNav();
+    // 사이드바는 항상 닫힌 상태로 시작 (수동으로 햄버거 버튼 클릭 시 열림)
 
     // ========================================
     // Favorites (즐겨찾기) - localStorage
