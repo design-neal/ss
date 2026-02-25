@@ -225,12 +225,19 @@ app.get('*', (req, res) => {
 
 // ─────────────────────────────────────────────
 // 서버 시작
+// Vercel은 module.exports = app 만 사용 (listen 불필요)
+// 로컬 실행 시에만 app.listen() 호출
 // ─────────────────────────────────────────────
-app.listen(PORT, () => {
-    console.log(`\n🚀 StockAI Server  →  http://localhost:${PORT}`);
-    console.log(`📡 Health check    →  http://localhost:${PORT}/health\n`);
-    // 서버 시작 시 미리 crumb 발급
-    getCrumb().catch(err => console.error('⚠️  Initial crumb fetch 실패:', err.message));
-});
+if (require.main === module) {
+    // 로컬 실행
+    app.listen(PORT, () => {
+        console.log(`\n🚀 StockAI Server  →  http://localhost:${PORT}`);
+        console.log(`📡 Health check    →  http://localhost:${PORT}/health\n`);
+        getCrumb().catch(err => console.error('⚠️  Initial crumb fetch 실패:', err.message));
+    });
+} else {
+    // Vercel 서버리스: cold start 시 crumb 미리 발급
+    getCrumb().catch(() => {});
+}
 
 module.exports = app;
