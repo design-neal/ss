@@ -25,12 +25,12 @@
             --bg:#f5f7fa;--bg2:#ffffff;--bg3:#f0f2f5;--bg4:#e4e7ec;
             --border:rgba(0,0,0,0.08);--text:#1a1a2e;--text2:#4a5568;--text3:#a0aec0;
         }
-        html{scroll-behavior:smooth;}
-        body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+        html{scroll-behavior:smooth;overflow-x:hidden;max-width:100vw;}
+        body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;max-width:100vw;}
 
         /* ===== APP SHELL ===== */
-        .app-wrapper{display:flex;min-height:100vh;transition:padding-left .28s cubic-bezier(.4,0,.2,1);}
-        .app{flex:1;max-width:1200px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;}
+        .app-wrapper{display:flex;min-height:100vh;transition:padding-left .28s cubic-bezier(.4,0,.2,1);overflow-x:hidden;max-width:100vw;}
+        .app{flex:1;min-width:0;width:100%;max-width:1200px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;overflow-x:hidden;}
         @media(min-width:768px){.app{display:grid;grid-template-columns:1fr;}}
 
         /* ===== SIDE NAV ===== */
@@ -505,13 +505,16 @@
 
         /* ===== MOBILE (≤640px) ===== */
         @media(max-width:640px){
-            /* ----- Header ----- */
-            .header{padding:10px 12px 8px;}
-            .header-top{gap:8px;margin-bottom:10px;}
-            .logo{font-size:17px;}
-            .market-btn{padding:5px 10px;font-size:12px;}
-            .search-box input{font-size:16px;padding:8px 6px;} /* 16px → iOS 자동 확대 방지 */
-            .search-btn{padding:8px 14px;font-size:13px;}
+            /* ----- Header (2줄 레이아웃) ----- */
+            .header{padding:10px 14px 10px;}
+            .header-top{flex-wrap:wrap;gap:8px;margin-bottom:0;}
+            .logo{font-size:17px;flex:1;}        /* 로고가 빈 공간 채움 */
+            .search-wrap{order:3;flex:0 0 100%;width:100%;margin-top:6px;min-width:0;overflow:hidden;} /* 검색줄 전체 너비 */
+            .search-box{min-width:0;} /* flex 아이템이 내용 크기 이하로 축소 가능하도록 */
+            .search-box input{font-size:16px;padding:9px 8px;min-width:0;} /* 16px → iOS 자동 확대 방지 */
+            .search-btn{padding:9px 16px;font-size:14px;font-weight:800;flex-shrink:0;white-space:nowrap;}
+            .market-btn{padding:6px 12px;font-size:13px;}
+            .market-toggle{flex-shrink:0;}
 
             /* ----- Welcome screen ----- */
             .welcome-top{padding:50px 16px 32px;}
@@ -551,6 +554,8 @@
             /* ----- Cards ----- */
             .card{margin:4px 10px;padding:16px;}
             .card-title{font-size:14px;margin-bottom:12px;}
+            .ai-summary,.ai-detail-text,.entry-subtitle,.entry-check-desc,.warning-box .text,.entry-strategy-label,.top100-name{overflow-wrap:break-word;word-break:keep-all;}
+            .ai-detail-title{flex-wrap:wrap;gap:4px;}
 
             /* ----- Chart ----- */
             .tv-chart-wrap{height:340px;}
@@ -589,18 +594,19 @@
 
             /* ----- Trade style tabs ----- */
             .trade-style-tabs{margin:4px 10px 0;padding:5px 8px;gap:5px;}
-            .trade-style-tab{font-size:12px;padding:10px 8px;gap:4px;}
-            .trade-style-tab svg{width:13px;height:13px;}
+            .trade-style-tab{font-size:13px;padding:11px 8px;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+            .trade-style-tab svg{width:14px;height:14px;flex-shrink:0;}
 
             /* ----- Options ----- */
             .options-wrap{padding:12px 0 24px;}
-            .options-toggle-row{padding:0 12px;}
-            .options-summary-row{padding:0 12px;}
-            .options-exp-bar{padding:0 12px 10px;}
-            .opt-tbl th,.opt-tbl td{padding:5px 5px;font-size:11px;}
+            .options-toggle-row{padding:0 12px;flex-wrap:wrap;gap:6px;}
+            .options-summary-row{padding:0 12px;grid-template-columns:repeat(2,1fr)!important;}
+            .options-exp-bar{padding:0 12px 10px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;}
+            .options-exp-bar::-webkit-scrollbar{display:none;}
+            .opt-tbl th,.opt-tbl td{padding:5px 4px;font-size:11px;}
             .opt-strike{font-size:11px;}
             .opt-iv{font-size:10px;}
-            .options-chain-grid{padding:0 10px;}
+            .options-chain-grid{padding:0;overflow-x:hidden;}
 
             /* ----- Analysis refresh bar ----- */
             .analysis-refresh-bar{padding:5px 12px 2px;font-size:11px;gap:5px;}
