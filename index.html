@@ -574,6 +574,55 @@
         }
         [data-theme="light"] .trade-style-tabs{background:var(--bg2);}
         [data-theme="light"] .trade-style-tab{border-color:var(--border);}
+        /* ===== OPTIONS CHAIN (옵션현황) ===== */
+        .options-wrap{padding:20px 24px 32px;}
+        .options-exp-bar{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;margin-bottom:20px;scrollbar-width:none;}
+        .options-exp-bar::-webkit-scrollbar{display:none;}
+        .options-exp-btn{padding:6px 16px;border:1.5px solid var(--border);background:var(--bg3);color:var(--text2);border-radius:20px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;white-space:nowrap;transition:all .15s;flex-shrink:0;}
+        .options-exp-btn.active{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.1);}
+        .options-exp-btn:hover:not(.active){border-color:var(--text3);color:var(--text);}
+        .options-summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+        @media(max-width:600px){.options-summary-row{grid-template-columns:repeat(2,1fr);}}
+        .options-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;}
+        .options-stat-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.3px;margin-bottom:4px;}
+        .options-stat-val{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+        .options-pcr-bar{height:5px;border-radius:3px;background:var(--bg4);margin-top:8px;overflow:hidden;}
+        .options-pcr-fill-c{height:100%;float:left;background:var(--green);border-radius:3px 0 0 3px;}
+        .options-pcr-fill-p{height:100%;float:right;background:var(--red);border-radius:0 3px 3px 0;}
+        .options-chain-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+        @media(max-width:700px){.options-chain-grid{grid-template-columns:1fr;}}
+        .options-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+        .options-card-hd{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border);}
+        .options-card-title{font-size:15px;font-weight:800;}
+        .options-card-title.call{color:var(--green);}
+        .options-card-title.put{color:var(--red);}
+        .options-card-sub{font-size:11px;color:var(--text3);font-weight:600;}
+        .opt-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+        .opt-tbl th{font-size:10px;font-weight:700;color:var(--text3);padding:8px 8px;text-align:right;background:var(--bg3);border-bottom:1px solid var(--border);white-space:nowrap;letter-spacing:.3px;}
+        .opt-tbl th:first-child{text-align:left;padding-left:12px;}
+        .opt-tbl td{padding:7px 8px;text-align:right;border-bottom:1px solid rgba(255,255,255,.03);font-variant-numeric:tabular-nums;font-weight:600;color:var(--text2);}
+        .opt-tbl td:first-child{text-align:left;padding-left:12px;}
+        .opt-tbl tr:last-child td{border-bottom:none;}
+        .opt-tbl tr.itm-call td{background:rgba(34,197,94,.05);}
+        .opt-tbl tr.itm-call .opt-strike{color:var(--green);}
+        .opt-tbl tr.itm-put td{background:rgba(239,68,68,.05);}
+        .opt-tbl tr.itm-put .opt-strike{color:var(--red);}
+        .opt-tbl tr:hover td{background:var(--bg4)!important;}
+        .opt-strike{font-size:13px;font-weight:800;color:var(--text);}
+        .opt-iv{color:var(--purple);font-size:11px;}
+        .opt-vol{color:var(--cyan);}
+        .opt-up{color:var(--green);}
+        .opt-down{color:var(--red);}
+        .opt-itm-badge{display:inline-block;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:4px;vertical-align:middle;}
+        .opt-itm-badge.call{background:rgba(34,197,94,.15);color:var(--green);}
+        .opt-itm-badge.put{background:rgba(239,68,68,.15);color:var(--red);}
+        .options-empty{text-align:center;padding:48px 20px;color:var(--text3);font-size:14px;line-height:1.8;}
+        .options-loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:48px 20px;color:var(--text3);font-size:14px;}
+        .options-itm-only-label{font-size:12px;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:6px;}
+        .options-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
+        .options-filter-btns{display:flex;gap:6px;}
+        .options-filter-btn{padding:5px 12px;border:1px solid var(--border);background:transparent;color:var(--text3);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all .15s;}
+        .options-filter-btn.active{background:var(--bg3);color:var(--text);border-color:var(--text3);}
     </style>
 </head>
 <body>
@@ -681,6 +730,7 @@
         <button class="tab-item" data-tab="analysis" onclick="switchTab('analysis')">분석</button>
         <button class="tab-item" data-tab="info" onclick="switchTab('info')">종목정보</button>
         <button class="tab-item" data-tab="company" onclick="switchTab('company')">기업</button>
+        <button class="tab-item" data-tab="options" onclick="switchTab('options')">옵션</button>
     </nav>
 
     <!-- Main Content -->
@@ -1013,6 +1063,34 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tab 5: 옵션현황 -->
+        <div class="tab-content" id="tabOptions" data-tab="options">
+            <div class="options-wrap">
+                <div class="options-empty" id="optionsEmpty">
+                    종목을 검색하면 옵션 데이터가 표시됩니다.<br>
+                    <span style="font-size:12px;margin-top:6px;display:block;">미국 주식 콜/풋 옵션 체인을 제공합니다.</span>
+                </div>
+                <div id="optionsContent" style="display:none;">
+                    <!-- 만기일 선택 -->
+                    <div class="options-exp-bar" id="optionsExpBar"></div>
+                    <!-- 요약 통계 -->
+                    <div class="options-summary-row" id="optionsSummary"></div>
+                    <!-- 필터 -->
+                    <div class="options-toggle-row">
+                        <span id="optionsCurrentExp" style="font-size:13px;font-weight:700;color:var(--text);"></span>
+                        <div class="options-filter-btns">
+                            <button class="options-filter-btn active" onclick="setOptionsFilter('all')">전체</button>
+                            <button class="options-filter-btn" onclick="setOptionsFilter('itm')">ITM만</button>
+                            <button class="options-filter-btn" onclick="setOptionsFilter('otm')">OTM만</button>
+                        </div>
+                    </div>
+                    <!-- 콜/풋 테이블 -->
+                    <div class="options-chain-grid" id="optionsChainGrid"></div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 </div><!-- /app-wrapper -->
@@ -1286,6 +1364,10 @@
     function switchTab(tabName) {
         document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
         document.querySelectorAll('.tab-content').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+        // 옵션 탭 클릭 시 데이터 로드 (lazy load)
+        if (tabName === 'options' && currentFullSymbol) {
+            renderOptionsTab(currentFullSymbol);
+        }
     }
 
     // ========================================
@@ -4834,6 +4916,212 @@ Rules:
         applyTheme(saved);
     })();
 
+    // ========================================
+    // 옵션현황 (Options Chain)
+    // ========================================
+    let _optionsSymbol = '';
+    let _optionsAllCalls = [];
+    let _optionsAllPuts = [];
+    let _optionsCurrentPrice = 0;
+    let _optionsFilter = 'all';
+    let _optionsExpDates = [];
+
+    async function renderOptionsTab(symbol) {
+        const emptyEl   = document.getElementById('optionsEmpty');
+        const contentEl = document.getElementById('optionsContent');
+        const expBar    = document.getElementById('optionsExpBar');
+        const summaryEl = document.getElementById('optionsSummary');
+        const gridEl    = document.getElementById('optionsChainGrid');
+        if (!emptyEl) return;
+
+        // 이미 같은 종목이면 재조회 생략
+        if (_optionsSymbol === symbol && _optionsAllCalls.length) return;
+
+        emptyEl.style.display = 'none';
+        contentEl.style.display = 'block';
+        expBar.innerHTML  = '';
+        summaryEl.innerHTML = '';
+        gridEl.innerHTML  = '<div class="options-loading"><div class="spinner" style="width:20px;height:20px;border-width:2px;"></div>옵션 데이터 로딩 중...</div>';
+
+        try {
+            const res  = await fetch(`${API_BASE}/api/options/${encodeURIComponent(symbol)}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const chain = data?.optionChain?.result?.[0];
+            if (!chain) throw new Error('옵션 데이터 없음');
+
+            _optionsSymbol       = symbol;
+            _optionsExpDates     = chain.expirationDates || [];
+            _optionsCurrentPrice = chain.quote?.regularMarketPrice || stockData?.meta?.regularMarketPrice || 0;
+
+            // 만기일 버튼 렌더
+            expBar.innerHTML = _optionsExpDates.slice(0, 12).map((ts, i) => {
+                const d = new Date(ts * 1000);
+                const label = d.toLocaleDateString('ko-KR', { month:'2-digit', day:'2-digit', year:'2-digit' });
+                return `<button class="options-exp-btn${i===0?' active':''}" onclick="loadOptionsDate(${ts})">${label}</button>`;
+            }).join('');
+
+            // 첫 번째 만기일 데이터 렌더
+            const opt = chain.options?.[0];
+            if (!opt) throw new Error('옵션 체인 없음');
+            _optionsAllCalls = opt.calls || [];
+            _optionsAllPuts  = opt.puts  || [];
+
+            const firstTs = _optionsExpDates[0];
+            if (firstTs) {
+                const d = new Date(firstTs * 1000);
+                document.getElementById('optionsCurrentExp').textContent =
+                    `만기: ${d.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' })}`;
+            }
+            renderOptionsChain();
+            renderOptionsSummary();
+
+        } catch(e) {
+            gridEl.innerHTML = `<div class="options-loading" style="color:var(--red)">⚠ ${e.message}</div>`;
+        }
+    }
+
+    async function loadOptionsDate(ts) {
+        // 만기일 버튼 active 교체
+        document.querySelectorAll('.options-exp-btn').forEach(b => {
+            b.classList.toggle('active', b.onclick?.toString().includes(ts));
+        });
+        const d = new Date(ts * 1000);
+        document.getElementById('optionsCurrentExp').textContent =
+            `만기: ${d.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' })}`;
+
+        const gridEl = document.getElementById('optionsChainGrid');
+        gridEl.innerHTML = '<div class="options-loading"><div class="spinner" style="width:18px;height:18px;border-width:2px;"></div>로딩 중...</div>';
+
+        try {
+            const res  = await fetch(`${API_BASE}/api/options/${encodeURIComponent(_optionsSymbol)}?date=${ts}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const opt  = data?.optionChain?.result?.[0]?.options?.[0];
+            if (!opt) throw new Error('데이터 없음');
+            _optionsAllCalls = opt.calls || [];
+            _optionsAllPuts  = opt.puts  || [];
+            renderOptionsChain();
+            renderOptionsSummary();
+        } catch(e) {
+            gridEl.innerHTML = `<div class="options-loading" style="color:var(--red)">⚠ ${e.message}</div>`;
+        }
+    }
+
+    function setOptionsFilter(f) {
+        _optionsFilter = f;
+        document.querySelectorAll('.options-filter-btn').forEach(b => {
+            b.classList.toggle('active', b.onclick?.toString().includes(`'${f}'`));
+        });
+        renderOptionsChain();
+    }
+
+    function renderOptionsSummary() {
+        const summaryEl = document.getElementById('optionsSummary');
+        const totalCallOI = _optionsAllCalls.reduce((s, o) => s + (o.openInterest || 0), 0);
+        const totalPutOI  = _optionsAllPuts.reduce((s, o)  => s + (o.openInterest || 0), 0);
+        const totalCallVol = _optionsAllCalls.reduce((s, o) => s + (o.volume || 0), 0);
+        const totalPutVol  = _optionsAllPuts.reduce((s, o)  => s + (o.volume || 0), 0);
+        const pcr = totalCallOI > 0 ? (totalPutOI / totalCallOI).toFixed(2) : '-';
+        const pcrNum = parseFloat(pcr);
+        const pcrColor = pcrNum >= 1 ? 'var(--red)' : 'var(--green)';
+        const callPct = totalCallOI + totalPutOI > 0 ? (totalCallOI / (totalCallOI + totalPutOI) * 100).toFixed(0) : 50;
+        const putPct  = 100 - callPct;
+        const fmtK = v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v;
+
+        summaryEl.innerHTML = `
+            <div class="options-stat">
+                <div class="options-stat-label">PUT/CALL RATIO</div>
+                <div class="options-stat-val" style="color:${pcrColor}">${pcr}</div>
+                <div class="options-pcr-bar">
+                    <div class="options-pcr-fill-c" style="width:${callPct}%"></div>
+                    <div class="options-pcr-fill-p" style="width:${putPct}%"></div>
+                </div>
+            </div>
+            <div class="options-stat">
+                <div class="options-stat-label">콜 미결제약정</div>
+                <div class="options-stat-val" style="color:var(--green)">${fmtK(totalCallOI)}</div>
+            </div>
+            <div class="options-stat">
+                <div class="options-stat-label">풋 미결제약정</div>
+                <div class="options-stat-val" style="color:var(--red)">${fmtK(totalPutOI)}</div>
+            </div>
+            <div class="options-stat">
+                <div class="options-stat-label">콜/풋 거래량</div>
+                <div class="options-stat-val" style="font-size:14px;">
+                    <span style="color:var(--green)">${fmtK(totalCallVol)}</span>
+                    <span style="color:var(--text3);font-size:12px;"> / </span>
+                    <span style="color:var(--red)">${fmtK(totalPutVol)}</span>
+                </div>
+            </div>`;
+    }
+
+    function renderOptionsChain() {
+        const gridEl = document.getElementById('optionsChainGrid');
+        const price  = _optionsCurrentPrice;
+        const fmtK = v => v == null ? '-' : v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v;
+        const fmtP = v => v == null ? '-' : '$' + Number(v).toFixed(2);
+        const fmtIV = v => v == null ? '-' : (v * 100).toFixed(1) + '%';
+        const fmtChg = v => {
+            if (v == null) return '-';
+            const s = (v >= 0 ? '+' : '') + v.toFixed(2);
+            return `<span class="${v >= 0 ? 'opt-up' : 'opt-down'}">${s}</span>`;
+        };
+
+        const filterFn = (list, isCall) => {
+            if (_optionsFilter === 'itm') return list.filter(o => o.inTheMoney);
+            if (_optionsFilter === 'otm') return list.filter(o => !o.inTheMoney);
+            return list;
+        };
+
+        const calls = filterFn(_optionsAllCalls, true);
+        const puts  = filterFn(_optionsAllPuts, false);
+
+        const makeTable = (list, type) => {
+            if (!list.length) return '<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px;">데이터 없음</div>';
+            const itmClass = type === 'call' ? 'itm-call' : 'itm-put';
+            const rows = list.map(o => {
+                const itmBadge = o.inTheMoney ? `<span class="opt-itm-badge ${type}">ITM</span>` : '';
+                return `<tr class="${o.inTheMoney ? itmClass : ''}">
+                    <td><span class="opt-strike">${fmtP(o.strike)}</span>${itmBadge}</td>
+                    <td>${fmtP(o.lastPrice)}</td>
+                    <td>${fmtChg(o.change)}</td>
+                    <td>${fmtP(o.bid)} / ${fmtP(o.ask)}</td>
+                    <td class="opt-vol">${fmtK(o.volume)}</td>
+                    <td>${fmtK(o.openInterest)}</td>
+                    <td class="opt-iv">${fmtIV(o.impliedVolatility)}</td>
+                </tr>`;
+            }).join('');
+
+            return `<div style="overflow-x:auto;"><table class="opt-tbl">
+                <thead><tr>
+                    <th>행사가</th><th>최종가</th><th>변동</th>
+                    <th>매수/매도</th><th>거래량</th><th>미결제</th><th>IV</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table></div>`;
+        };
+
+        const callCount = calls.filter(o => o.inTheMoney).length;
+        const putCount  = puts.filter(o => o.inTheMoney).length;
+
+        gridEl.innerHTML = `
+            <div class="options-card">
+                <div class="options-card-hd">
+                    <span class="options-card-title call">▲ 콜 옵션 (CALL)</span>
+                    <span class="options-card-sub">ITM ${callCount}개 / 총 ${calls.length}개</span>
+                </div>
+                ${makeTable(calls, 'call')}
+            </div>
+            <div class="options-card">
+                <div class="options-card-hd">
+                    <span class="options-card-title put">▼ 풋 옵션 (PUT)</span>
+                    <span class="options-card-sub">ITM ${putCount}개 / 총 ${puts.length}개</span>
+                </div>
+                ${makeTable(puts, 'put')}
+            </div>`;
+    }
+
     // onclick 핸들러 함수를 window에 명시적 노출 (스코프 안전장치)
     Object.assign(window, {
         closeSideNav, toggleSideNav, openSideNav, goHome,
@@ -4843,7 +5131,8 @@ Rules:
         saveAiKey, setAiPrompt, runAiIndicator,
         switchAiTab, toggleAiLine, removeAiLine, clearAllAiLines,
         setDrawTool, setDrawColor, setDrawWidth, undoDraw, clearAllDrawings,
-        toggleTheme, switchTradeStyle, showLoading, hideLoading, showToast
+        toggleTheme, switchTradeStyle, showLoading, hideLoading, showToast,
+        loadOptionsDate, setOptionsFilter
     });
     </script>
 </body>

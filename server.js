@@ -162,6 +162,25 @@ app.get('/api/summary/:symbol', async (req, res) => {
 });
 
 /**
+ * 옵션 체인 데이터
+ * GET /api/options/:symbol?date={timestamp}
+ * date: Unix timestamp (생략 시 가장 가까운 만기일)
+ */
+app.get('/api/options/:symbol', async (req, res) => {
+    const { symbol } = req.params;
+    const { date } = req.query;
+    try {
+        let url = `https://query2.finance.yahoo.com/v7/finance/options/${encodeURIComponent(symbol)}`;
+        if (date) url += `?date=${date}`;
+        const data = await yfRequest(url);
+        res.json(data);
+    } catch (err) {
+        console.error(`[options] ${symbol}:`, err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
  * 스크리너 (상승률/하락률/거래량 상위 종목)
  * GET /api/screener/:filter?count=100
  * filter: day_gainers | day_losers | most_actives
