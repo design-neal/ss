@@ -10,9 +10,11 @@ const path    = require('path');
 const https   = require('https');
 const http    = require('http');
 
-// Yahoo Finance 응답 헤더가 커서 기본 8KB 한도를 초과할 수 있음 → 32KB로 확장
-const httpAgent  = new http.Agent({ maxHeaderSize: 32768 });
-const httpsAgent = new https.Agent({ maxHeaderSize: 32768 });
+// Yahoo Finance 응답 헤더가 커서 기본 8KB 한도를 초과할 수 있음
+// 옵션체인 API는 헤더가 특히 커서 128KB로 확장
+const MAX_HEADER = 131072; // 128KB
+const httpAgent  = new http.Agent({ maxHeaderSize: MAX_HEADER });
+const httpsAgent = new https.Agent({ maxHeaderSize: MAX_HEADER });
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
