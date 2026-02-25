@@ -786,6 +786,7 @@
                 </div>
                 <button class="search-btn" onclick="searchStock()">분석</button>
             </div>
+            <button class="hamburger-btn" id="themeHeaderBtn" onclick="toggleTheme()" title="테마 변경">&#9790;</button>
             <button class="hamburger-btn" onclick="toggleSideNav()" title="메뉴">&#9776;</button>
         </div>
     </header>
@@ -5072,14 +5073,17 @@ Rules:
         const icon = document.getElementById('themeIcon');
         const label = document.getElementById('themeLabel');
         const sw = document.getElementById('themeSwitch');
+        const headerBtn = document.getElementById('themeHeaderBtn');
         if (theme === 'light') {
             icon.innerHTML = '&#9728;';
             label.textContent = '라이트 모드';
             sw.className = 'theme-switch light';
+            if (headerBtn) headerBtn.innerHTML = '&#9728;';
         } else {
             icon.innerHTML = '&#9790;';
             label.textContent = '다크 모드';
             sw.className = 'theme-switch dark';
+            if (headerBtn) headerBtn.innerHTML = '&#9790;';
         }
         // Lightweight Charts 배경 업데이트
         if (lwChart) {
