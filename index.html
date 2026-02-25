@@ -215,7 +215,7 @@
         .tab-content.active{display:block;}
 
         /* ===== CARDS ===== */
-        .card{background:var(--bg2);border-radius:var(--r);padding:24px;margin:4px 16px;}
+        .card{background:var(--bg2);border-radius:var(--r);padding:24px;margin:4px 24px;}
         .card-title{font-size:16px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px;letter-spacing:-0.3px;}
         .card-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
 
@@ -417,10 +417,7 @@
         /* ===== TIMING COMBINED CARD ===== */
         /* ===== ENTRY CARD ===== */
         .entry-card{position:relative;overflow:hidden;}
-        .entry-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--r) var(--r) 0 0;}
-        .entry-card.entry-go::before{background:linear-gradient(90deg,#22c55e,#4ade80);}
-        .entry-card.entry-wait::before{background:linear-gradient(90deg,#eab308,#facc15);}
-        .entry-card.entry-danger::before{background:linear-gradient(90deg,#ef4444,#f87171);}
+        .entry-card::before{display:none;}
         .entry-verdict{text-align:center;padding:12px 0 8px;}
         .entry-icon{font-size:48px;line-height:1;margin-bottom:8px;}
         .entry-title{font-size:24px;font-weight:800;margin-bottom:4px;}
@@ -451,10 +448,7 @@
 
         /* ===== EXIT (매도) CARD ===== */
         .exit-card{position:relative;overflow:hidden;}
-        .exit-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--r) var(--r) 0 0;}
-        .exit-card.exit-sell::before{background:linear-gradient(90deg,#ef4444,#f87171);}
-        .exit-card.exit-hold::before{background:linear-gradient(90deg,#22c55e,#4ade80);}
-        .exit-card.exit-partial::before{background:linear-gradient(90deg,#eab308,#facc15);}
+        .exit-card::before{display:none;}
         .exit-verdict{text-align:center;padding:12px 0 8px;}
         .exit-checklist{margin-top:8px;display:flex;flex-direction:column;gap:6px;}
         .exit-meter{margin-top:8px;}
@@ -481,7 +475,7 @@
         @media(min-width:900px){
             .app{max-width:1200px;}
             .stock-hero{padding:32px 32px 24px;}
-            .card{margin:4px 24px;}
+            .card{margin:4px 32px;}
             .tab-content.active{display:grid;grid-template-columns:1fr 440px;gap:0;align-items:start;}
             #tabChart.active{display:block;}
             #tabAnalysis.active{display:block;}
