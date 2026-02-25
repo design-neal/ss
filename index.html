@@ -619,10 +619,15 @@
         .options-empty{text-align:center;padding:48px 20px;color:var(--text3);font-size:14px;line-height:1.8;}
         .options-loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:48px 20px;color:var(--text3);font-size:14px;}
         .options-itm-only-label{font-size:12px;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:6px;}
-        .options-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
-        .options-filter-btns{display:flex;gap:6px;}
+        .options-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;}
+        .options-filter-btns{display:flex;gap:6px;flex-wrap:wrap;}
         .options-filter-btn{padding:5px 12px;border:1px solid var(--border);background:transparent;color:var(--text3);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all .15s;}
         .options-filter-btn.active{background:var(--bg3);color:var(--text);border-color:var(--text3);}
+        .options-filter-label{font-size:12px;color:var(--text3);font-weight:600;white-space:nowrap;}
+        .opt-th-sort{cursor:pointer;user-select:none;}
+        .opt-th-sort:hover{color:var(--text)!important;}
+        .opt-sort-icon{font-size:10px;opacity:.35;margin-left:2px;}
+        .opt-sort-icon.active{opacity:1;color:var(--yellow);}
     </style>
 </head>
 <body>
@@ -944,14 +949,14 @@
                         </div>
                     </div>
                     <div class="card">
-                        <div class="card-title"><span class="dot" style="background:var(--red)"></span>단타 청산 시점 <span class="trade-badge day-badge">DAY</span></div>
+                        <div class="card-title"><span class="dot" style="background:var(--red)"></span>단타 매도 시점 <span class="trade-badge day-badge">DAY</span></div>
                         <div class="exit-card" id="dayExitCard">
                             <div class="exit-verdict" id="dayExitVerdict"></div>
                             <div class="exit-meter" id="dayExitMeter"></div>
                             <div class="exit-checklist" id="dayExitChecklist"></div>
                             <div class="exit-strategy" id="dayExitStrategy"></div>
                             <div class="warning-box" style="margin-top:12px">
-                                <div class="title">단타 청산 원칙</div>
+                                <div class="title">단타 매도 원칙</div>
                                 <div class="text">단타는 당일 청산이 원칙입니다. 오버나잇 리스크를 최소화하세요.</div>
                             </div>
                         </div>
@@ -1080,10 +1085,20 @@
                     <div class="options-toggle-row">
                         <span id="optionsCurrentExp" style="font-size:13px;font-weight:700;color:var(--text);"></span>
                         <div class="options-filter-btns">
-                            <button class="options-filter-btn active" onclick="setOptionsFilter('all')">전체</button>
-                            <button class="options-filter-btn" onclick="setOptionsFilter('itm')">ITM만</button>
-                            <button class="options-filter-btn" onclick="setOptionsFilter('otm')">OTM만</button>
+                            <button class="options-filter-btn active" id="optITMBtn_all" onclick="setOptionsFilter('all')">전체</button>
+                            <button class="options-filter-btn" id="optITMBtn_itm" onclick="setOptionsFilter('itm')">ITM만</button>
+                            <button class="options-filter-btn" id="optITMBtn_otm" onclick="setOptionsFilter('otm')">OTM만</button>
                         </div>
+                    </div>
+                    <div class="options-toggle-row" style="margin-bottom:14px;">
+                        <span class="options-filter-label">행사가 범위</span>
+                        <div class="options-filter-btns">
+                            <button class="options-filter-btn opt-range-btn active" data-r="all" onclick="setOptionsStrikeRange('all')">전체</button>
+                            <button class="options-filter-btn opt-range-btn" data-r="5" onclick="setOptionsStrikeRange('5')">ATM±5%</button>
+                            <button class="options-filter-btn opt-range-btn" data-r="10" onclick="setOptionsStrikeRange('10')">ATM±10%</button>
+                            <button class="options-filter-btn opt-range-btn" data-r="20" onclick="setOptionsStrikeRange('20')">ATM±20%</button>
+                        </div>
+                        <button class="options-filter-btn" id="optionsVolBtn" onclick="toggleOptionsVolFilter()">거래량 &gt; 0</button>
                     </div>
                     <!-- 콜/풋 테이블 -->
                     <div class="options-chain-grid" id="optionsChainGrid"></div>
@@ -4265,7 +4280,7 @@ Rules:
         let s4 = 50, t4 = '';
         if (lastK <= 20 && lastK > prevK) { s4 = 85; t4 = `Stochastic K ${lastK.toFixed(0)} 과매도에서 반등! 단타 매수 적기.`; }
         else if (lastK <= 20) { s4 = 60; t4 = `Stochastic K ${lastK.toFixed(0)} 과매도 구간. 반등 신호 대기.`; }
-        else if (lastK >= 80 && lastK < prevK) { s4 = 20; t4 = `Stochastic K ${lastK.toFixed(0)} 과매수에서 하락 전환! 단타 청산.`; }
+        else if (lastK >= 80 && lastK < prevK) { s4 = 20; t4 = `Stochastic K ${lastK.toFixed(0)} 과매수에서 하락 전환! 단타 매도.`; }
         else if (lastK >= 80) { s4 = 35; t4 = `Stochastic K ${lastK.toFixed(0)} 과매수. 추가 상승 제한적.`; }
         else if (lastK > lastD && lastK > prevK) { s4 = 70; t4 = `Stochastic K(${lastK.toFixed(0)}) > D(${lastD.toFixed(0)}) 상승 중.`; }
         else { s4 = 45; t4 = `Stochastic K ${lastK.toFixed(0)} 중립.`; }
@@ -4664,7 +4679,7 @@ Rules:
     }
 
     // =====================
-    // 단타 청산 시점
+    // 단타 매도 시점
     // =====================
     function renderDayExit() {
         const d = getAnalysisData();
@@ -4678,7 +4693,7 @@ Rules:
         const lastK = stoch.kLine.filter(v=>v!=null).pop()||50;
         const prevK = stoch.kLine.filter(v=>v!=null).slice(-2)[0]||50;
         const lastD = stoch.dLine.filter(v=>v!=null).pop()||50;
-        if (lastK >= 80 && lastK < prevK) { checks.push({ status:'fail', label:'Stochastic 과매수 하락', desc:`K ${lastK.toFixed(0)} 과매수에서 하락 전환! 단타 청산.` }); sellCount++; }
+        if (lastK >= 80 && lastK < prevK) { checks.push({ status:'fail', label:'Stochastic 과매수 하락', desc:`K ${lastK.toFixed(0)} 과매수에서 하락 전환! 단타 매도.` }); sellCount++; }
         else if (lastK >= 80 && lastK < lastD) { checks.push({ status:'fail', label:'Stochastic K<D 교차', desc:'과매수 영역에서 데드크로스.' }); sellCount++; }
         else if (lastK >= 75) { checks.push({ status:'warn', label:'Stochastic 과매수 주의', desc:`K ${lastK.toFixed(0)} 과매수 근접.` }); }
         else { checks.push({ status:'pass', label:'Stochastic 정상', desc:`K ${lastK.toFixed(0)} 과매수 아님.` }); }
@@ -4734,7 +4749,7 @@ Rules:
 
         const trailStop = price * 0.98; const prof1 = price * 1.02;
         const stratHtml = `
-            <div class="entry-strategy-title" style="color:var(--red)">단타 청산 전략</div>
+            <div class="entry-strategy-title" style="color:var(--red)">단타 매도 전략</div>
             <div class="entry-strategy-row"><span class="entry-strategy-label">트레일링 스탑 (-2%)</span><span class="entry-strategy-value" style="color:var(--red)">${fmtP(trailStop)}</span></div>
             <div class="entry-strategy-row"><span class="entry-strategy-label">익절가 (+2%)</span><span class="entry-strategy-value" style="color:var(--green)">${fmtP(prof1)}</span></div>
             <div class="entry-strategy-row"><span class="entry-strategy-label">당일 수익률</span><span class="entry-strategy-value" style="color:${dayReturn>=0?'var(--green)':'var(--red)'}">${dayReturn>=0?'+':''}${dayReturn.toFixed(2)}%</span></div>
@@ -4924,6 +4939,10 @@ Rules:
     let _optionsAllPuts = [];
     let _optionsCurrentPrice = 0;
     let _optionsFilter = 'all';
+    let _optionsStrikeRange = 'all'; // 'all' | '5' | '10' | '20'
+    let _optionsVolOnly = false;
+    let _optionsSortCol = null;      // null | 'strike' | 'volume' | 'oi' | 'iv'
+    let _optionsSortDir = 'asc';
     let _optionsExpDates = [];
 
     async function renderOptionsTab(symbol) {
@@ -4936,6 +4955,16 @@ Rules:
 
         // 이미 같은 종목이면 재조회 생략
         if (_optionsSymbol === symbol && _optionsAllCalls.length) return;
+
+        // 새 종목: 필터·정렬 상태 초기화
+        _optionsFilter      = 'all';
+        _optionsStrikeRange = 'all';
+        _optionsVolOnly     = false;
+        _optionsSortCol     = null;
+        _optionsSortDir     = 'asc';
+        document.querySelectorAll('.options-filter-btn').forEach(b => b.classList.remove('active'));
+        const allBtn = document.getElementById('optITMBtn_all'); if (allBtn) allBtn.classList.add('active');
+        const rangeBtn = document.querySelector('.opt-range-btn[data-r="all"]'); if (rangeBtn) rangeBtn.classList.add('active');
 
         emptyEl.style.display = 'none';
         contentEl.style.display = 'block';
@@ -5010,9 +5039,35 @@ Rules:
 
     function setOptionsFilter(f) {
         _optionsFilter = f;
-        document.querySelectorAll('.options-filter-btn').forEach(b => {
-            b.classList.toggle('active', b.onclick?.toString().includes(`'${f}'`));
+        ['all','itm','otm'].forEach(v => {
+            const el = document.getElementById(`optITMBtn_${v}`);
+            if (el) el.classList.toggle('active', v === f);
         });
+        renderOptionsChain();
+    }
+
+    function setOptionsStrikeRange(r) {
+        _optionsStrikeRange = r;
+        document.querySelectorAll('.opt-range-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.r === r);
+        });
+        renderOptionsChain();
+    }
+
+    function toggleOptionsVolFilter() {
+        _optionsVolOnly = !_optionsVolOnly;
+        const btn = document.getElementById('optionsVolBtn');
+        if (btn) btn.classList.toggle('active', _optionsVolOnly);
+        renderOptionsChain();
+    }
+
+    function sortOptionsBy(col) {
+        if (_optionsSortCol === col) {
+            _optionsSortDir = _optionsSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            _optionsSortCol = col;
+            _optionsSortDir = col === 'strike' ? 'asc' : 'desc';
+        }
         renderOptionsChain();
     }
 
@@ -5068,14 +5123,39 @@ Rules:
             return `<span class="${v >= 0 ? 'opt-up' : 'opt-down'}">${s}</span>`;
         };
 
-        const filterFn = (list, isCall) => {
-            if (_optionsFilter === 'itm') return list.filter(o => o.inTheMoney);
-            if (_optionsFilter === 'otm') return list.filter(o => !o.inTheMoney);
-            return list;
+        const filterFn = (list) => {
+            let result = list;
+            // ITM / OTM 필터
+            if (_optionsFilter === 'itm') result = result.filter(o => o.inTheMoney);
+            else if (_optionsFilter === 'otm') result = result.filter(o => !o.inTheMoney);
+            // 행사가 범위 필터 (ATM 기준 ±%)
+            if (_optionsStrikeRange !== 'all' && price) {
+                const pct = Number(_optionsStrikeRange) / 100;
+                result = result.filter(o => o.strike >= price * (1 - pct) && o.strike <= price * (1 + pct));
+            }
+            // 거래량 > 0 필터
+            if (_optionsVolOnly) result = result.filter(o => (o.volume || 0) > 0);
+            // 정렬
+            if (_optionsSortCol) {
+                const keyMap = { strike: 'strike', volume: 'volume', oi: 'openInterest', iv: 'impliedVolatility' };
+                const key = keyMap[_optionsSortCol];
+                result = [...result].sort((a, b) => {
+                    const va = a[key] ?? 0, vb = b[key] ?? 0;
+                    return _optionsSortDir === 'asc' ? va - vb : vb - va;
+                });
+            }
+            return result;
         };
 
-        const calls = filterFn(_optionsAllCalls, true);
-        const puts  = filterFn(_optionsAllPuts, false);
+        const calls = filterFn(_optionsAllCalls);
+        const puts  = filterFn(_optionsAllPuts);
+
+        const sortIcon = col => {
+            if (_optionsSortCol !== col) return `<span class="opt-sort-icon">⇅</span>`;
+            return _optionsSortDir === 'asc'
+                ? `<span class="opt-sort-icon active">↑</span>`
+                : `<span class="opt-sort-icon active">↓</span>`;
+        };
 
         const makeTable = (list, type) => {
             if (!list.length) return '<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px;">데이터 없음</div>';
@@ -5095,8 +5175,11 @@ Rules:
 
             return `<div style="overflow-x:auto;"><table class="opt-tbl">
                 <thead><tr>
-                    <th>행사가</th><th>최종가</th><th>변동</th>
-                    <th>매수/매도</th><th>거래량</th><th>미결제</th><th>IV</th>
+                    <th class="opt-th-sort" onclick="sortOptionsBy('strike')">행사가 ${sortIcon('strike')}</th>
+                    <th>최종가</th><th>변동</th><th>매수/매도</th>
+                    <th class="opt-th-sort" onclick="sortOptionsBy('volume')">거래량 ${sortIcon('volume')}</th>
+                    <th class="opt-th-sort" onclick="sortOptionsBy('oi')">미결제 ${sortIcon('oi')}</th>
+                    <th class="opt-th-sort" onclick="sortOptionsBy('iv')">IV ${sortIcon('iv')}</th>
                 </tr></thead>
                 <tbody>${rows}</tbody>
             </table></div>`;
@@ -5132,7 +5215,8 @@ Rules:
         switchAiTab, toggleAiLine, removeAiLine, clearAllAiLines,
         setDrawTool, setDrawColor, setDrawWidth, undoDraw, clearAllDrawings,
         toggleTheme, switchTradeStyle, showLoading, hideLoading, showToast,
-        loadOptionsDate, setOptionsFilter
+        loadOptionsDate, setOptionsFilter,
+        setOptionsStrikeRange, toggleOptionsVolFilter, sortOptionsBy
     });
     </script>
 </body>
