@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 배경 -->
+  <rect width="512" height="512" rx="112" fill="#0a0e14"/>
+  <!-- 차트 상승 라인 -->
+  <polyline points="64,360 152,260 224,300 320,160 448,200"
+    fill="none" stroke="#22c55e" stroke-width="28"
+    stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 점 강조 -->
+  <circle cx="320" cy="160" r="18" fill="#22c55e"/>
+  <!-- AI 텍스트 -->
+  <text x="256" y="470" font-family="Arial Black, Arial" font-size="100"
+    font-weight="900" text-anchor="middle" fill="#3b82f6" letter-spacing="-2">StockAI</text>
+</svg>

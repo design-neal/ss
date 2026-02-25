@@ -6,6 +6,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="StockAI">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon.svg">
     <title>StockAI - 주식 종목 분석</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
@@ -629,6 +633,11 @@
 
         /* Side nav theme toggle */
         .side-nav-footer{padding:16px;border-top:1px solid var(--border);}
+        /* PWA 설치 버튼 */
+        .pwa-install-btn{display:none;align-items:center;gap:12px;width:100%;padding:12px 14px;border:1.5px solid var(--blue);background:rgba(59,130,246,.08);color:var(--blue);border-radius:var(--r3);cursor:pointer;font-size:14px;font-weight:700;font-family:inherit;transition:all .18s;margin-bottom:10px;}
+        .pwa-install-btn:hover{background:rgba(59,130,246,.16);}
+        .pwa-install-btn.visible{display:flex;}
+        .pwa-install-icon{font-size:18px;flex-shrink:0;}
         .theme-toggle-btn{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:none;background:var(--bg3);color:var(--text2);border-radius:var(--r3);cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;transition:all .15s;}
         .theme-toggle-btn:hover{background:var(--bg4);color:var(--text);}
         .theme-toggle-btn .theme-icon{width:20px;text-align:center;font-size:16px;flex-shrink:0;}
@@ -758,6 +767,10 @@
         </div>
     </div>
     <div class="side-nav-footer">
+        <button class="pwa-install-btn" id="pwaInstallBtn" onclick="pwaInstall()">
+            <span class="pwa-install-icon">&#8681;</span>
+            <span>앱 설치하기</span>
+        </button>
         <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
             <span class="theme-icon" id="themeIcon">&#9790;</span>
             <span id="themeLabel">다크 모드</span>
@@ -5409,6 +5422,46 @@ Rules:
             </div>`;
     }
 
+    // ========================================
+    // PWA 설치
+    // ========================================
+    let _pwaPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', e => {
+        e.preventDefault();
+        _pwaPrompt = e;
+        const btn = document.getElementById('pwaInstallBtn');
+        if (btn) btn.classList.add('visible');
+    });
+
+    window.addEventListener('appinstalled', () => {
+        _pwaPrompt = null;
+        const btn = document.getElementById('pwaInstallBtn');
+        if (btn) btn.classList.remove('visible');
+        showToast('✅ StockAI가 앱으로 설치되었습니다!');
+    });
+
+    async function pwaInstall() {
+        if (!_pwaPrompt) {
+            showToast('이미 설치되어 있거나 이 브라우저는 설치를 지원하지 않습니다.');
+            return;
+        }
+        _pwaPrompt.prompt();
+        const { outcome } = await _pwaPrompt.userChoice;
+        if (outcome === 'accepted') {
+            _pwaPrompt = null;
+            const btn = document.getElementById('pwaInstallBtn');
+            if (btn) btn.classList.remove('visible');
+        }
+    }
+
+    // 서비스 워커 등록
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+    }
+
     // onclick 핸들러 함수를 window에 명시적 노출 (스코프 안전장치)
     Object.assign(window, {
         closeSideNav, toggleSideNav, openSideNav, goHome,
@@ -5421,7 +5474,7 @@ Rules:
         toggleTheme, switchTradeStyle, showLoading, hideLoading, showToast,
         loadOptionsDate, setOptionsFilter,
         setOptionsStrikeRange, toggleOptionsVolFilter, sortOptionsBy,
-        manualAnalysisRefresh
+        manualAnalysisRefresh, pwaInstall
     });
     </script>
 </body>

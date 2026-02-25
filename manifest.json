@@ -1,0 +1,34 @@
+{
+  "name": "StockAI - 주식 종목 분석",
+  "short_name": "StockAI",
+  "description": "AI 기반 주식 종목 분석 서비스 (한국/미국)",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0e14",
+  "theme_color": "#3b82f6",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["finance", "utilities"],
+  "shortcuts": [
+    {
+      "name": "홈",
+      "url": "/",
+      "description": "StockAI 홈으로 이동"
+    }
+  ]
+}
