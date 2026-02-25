@@ -4526,8 +4526,8 @@ Rules:
         const lastMACD = macdLine.filter(v=>v!=null).pop()||0; const lastSig = signalLine.filter(v=>v!=null).pop()||0;
         const hists = histogram.filter(v=>v!=null); const lastHist = hists.pop()||0;
         const histUp = hists.length >= 3 && hists[hists.length-1] > hists[hists.length-3];
-        const ml = macdLine.filter(v=>v!=null); const sl = signalLine.filter(v=>v!=null);
-        const macdGolden = ml.length>=2&&sl.length>=2&&(ml[ml.length-2]-sl[sl.length-2])<0&&(lastMACD-lastSig)>=0;
+        const ml = macdLine.filter(v=>v!=null); const slArr = signalLine.filter(v=>v!=null);
+        const macdGolden = ml.length>=2&&slArr.length>=2&&(ml[ml.length-2]-slArr[slArr.length-2])<0&&(lastMACD-lastSig)>=0;
         if (macdGolden) { checks.push({ status:'pass', label:'MACD 골든크로스!', desc:'강력한 스윙 매수 신호.' }); passCount++; }
         else if (lastMACD > lastSig && histUp) { checks.push({ status:'pass', label:'MACD 매수세 확대', desc:'히스토그램 확대. 상승 모멘텀 강화.' }); passCount++; }
         else if (lastMACD > lastSig) { checks.push({ status:'warn', label:'MACD 매수 구간', desc:'매수 신호이나 모멘텀 약화 주의.' }); }
@@ -4672,7 +4672,6 @@ Rules:
         const checks = [];
         let sellCount = 0;
         let totalChecks = 0;
-        const checks = []; let sellCount = 0; let totalChecks = 0;
         const lastRSI = rsi.filter(v=>v!=null).pop()||50;
         const lastMACD = macdLine.filter(v=>v!=null).pop()||0; const lastSig = signalLine.filter(v=>v!=null).pop()||0;
         const hists = histogram.filter(v=>v!=null); const histDir = hists.length>=3 ? hists[hists.length-1]-hists[hists.length-3] : 0;
