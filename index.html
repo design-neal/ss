@@ -816,14 +816,15 @@
         }
 
         /* ===== ENTRY / EXIT ROW (나란히) ===== */
-        .entry-exit-row{display:flex;align-items:start;}
+        .entry-exit-row{display:flex;align-items:start;gap:8px;}
         .entry-exit-row>.card{flex:1;min-width:0;}
         @media(max-width:640px){
             .entry-exit-row{flex-direction:column;}
             .entry-exit-row>.card{width:100%;}
         }
         @media(min-width:900px){
-            .entry-exit-row>.card{margin:4px 8px;}
+            .entry-exit-row{gap:8px;}
+            .entry-exit-row>.card{margin:4px 0;}
             .entry-exit-row>.card:first-child{margin-left:32px;}
             .entry-exit-row>.card:last-child{margin-right:32px;}
         }
