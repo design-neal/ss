@@ -834,6 +834,29 @@
             .entry-exit-row>.card:last-child{margin-right:0;}
         }
 
+        /* ===== SPLIT CALC FAB ===== */
+        #calcFab{position:fixed;bottom:24px;right:16px;width:52px;height:52px;border-radius:50%;background:#eab308;color:#000;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(234,179,8,.4);z-index:900;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;}
+        #calcFab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(234,179,8,.55);}
+        #calcFabOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:901;opacity:0;pointer-events:none;transition:opacity .25s;}
+        #calcFabOverlay.open{opacity:1;pointer-events:all;}
+        #calcFabModal{position:fixed;right:0;top:0;bottom:0;width:min(480px,100vw);background:var(--bg1);z-index:902;transform:translateX(110%);transition:transform .32s cubic-bezier(.32,.72,0,1);display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.25);}
+        #calcFabModal.open{transform:translateX(0);}
+        @media(max-width:640px){
+            #calcFab{bottom:calc(20px + env(safe-area-inset-bottom));right:14px;width:48px;height:48px;}
+            #calcFabModal{top:auto;left:0;right:0;bottom:0;width:100%;height:92vh;border-radius:16px 16px 0 0;transform:translateY(110%);box-shadow:0 -8px 40px rgba(0,0,0,.25);}
+            #calcFabModal.open{transform:translateY(0);}
+        }
+        .fab-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);font-size:16px;font-weight:800;flex-shrink:0;}
+        .fab-close{background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px;padding:4px 8px;line-height:1;border-radius:var(--r2);}
+        .fab-close:hover{background:var(--bg3);color:var(--text1);}
+        .fab-body{flex:1;overflow-y:auto;padding:16px 20px;-webkit-overflow-scrolling:touch;}
+        .fab-sec-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 6px;}
+        .fab-price-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
+        .fab-price-row:last-of-type{border-bottom:none;}
+        .fab-price-lbl{font-size:12px;color:var(--text2);flex:1;white-space:nowrap;}
+        .fab-price-input{width:110px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 8px;font-size:13px;color:var(--text1);outline:none;font-family:inherit;text-align:right;}
+        .fab-price-input:focus{border-color:var(--cyan);}
+
         /* ===== SPLIT CALC ===== */
         .sc-input-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
         .sc-input-group{display:flex;flex-direction:column;gap:5px;}
@@ -5676,56 +5699,9 @@ Rules:
     // 분할 매수 계산기
     // =====================
     function renderSplitCalc() {
+        // 인라인 카드 대신 FAB 패널 사용 — wrap은 비워둠
         const wrap = document.getElementById('splitCalcWrap');
-        if (!wrap) return;
-        const sc = window._sc;
-        if (!sc) { wrap.innerHTML = ''; return; }
-        const isKR = sc.isKR;
-        const unit = isKR ? '원' : 'USD';
-        const ph   = isKR ? '예: 1000000' : 'e.g. 10000';
-        wrap.innerHTML = `
-        <div class="card">
-            <div class="card-title">
-                <span class="dot" style="background:var(--yellow)"></span>분할 매수 계산기
-                <span style="font-size:11px;color:var(--text3);margin-left:auto;font-weight:500;">ATR 기반 5단계 자동 계산</span>
-            </div>
-            <div class="sc-input-grid">
-                <div class="sc-input-group">
-                    <label>총 투자 예산 (${unit})</label>
-                    <input type="number" id="calcBudget" placeholder="${ph}" oninput="_calcSplit()" min="0">
-                </div>
-                <div class="sc-input-group">
-                    <label>1차 투자금액 (${unit})</label>
-                    <input type="number" id="calcFirst" placeholder="${ph}" oninput="_calcSplit()" min="0">
-                </div>
-            </div>
-            <div class="sc-input-group" style="margin-bottom:14px;">
-                <label>비중 방식</label>
-                <select id="calcMode" onchange="_calcSplit()">
-                    <option value="equal">균등 배분 (20% × 5)</option>
-                    <option value="pyramid">역피라미드 — 하락할수록 더 많이 (10·15·20·25·30%)</option>
-                    <option value="front">전방 집중 — 지금 더 많이 (30·25·20·15·10%)</option>
-                </select>
-            </div>
-            <div style="overflow-x:auto;">
-                <table class="sc-tbl">
-                    <thead>
-                        <tr>
-                            <th>차수</th>
-                            <th>진입가</th>
-                            <th>투자금액</th>
-                            <th>수량</th>
-                            <th>누적투자</th>
-                            <th>평균매수가</th>
-                        </tr>
-                    </thead>
-                    <tbody id="calcTableBody">
-                        <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;font-size:13px;">💡 총 예산을 입력하면 자동 계산됩니다</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div id="calcSummary"></div>
-        </div>`;
+        if (wrap) wrap.innerHTML = '';
     }
 
     function _calcSplit() {
@@ -6613,6 +6589,193 @@ Rules:
     }
 
     // onclick 핸들러 함수를 window에 명시적 노출 (스코프 안전장치)
+    // ===========================
+    // 분할 매수 FAB
+    // ===========================
+    function openCalcFab() {
+        document.getElementById('calcFabOverlay').classList.add('open');
+        document.getElementById('calcFabModal').classList.add('open');
+        // 현재 종목 라벨
+        const lbl = document.getElementById('fabStockLabel');
+        if (lbl) {
+            const sym = document.querySelector('.hero-ticker')?.textContent?.trim() || '';
+            lbl.textContent = sym ? '— ' + sym : '';
+        }
+        renderCalcFabContent();
+    }
+
+    function closeCalcFab() {
+        document.getElementById('calcFabOverlay').classList.remove('open');
+        document.getElementById('calcFabModal').classList.remove('open');
+    }
+
+    function renderCalcFabContent() {
+        const sc   = window._sc;
+        const isKR = sc ? sc.isKR : (typeof currentMarket !== 'undefined' && currentMarket === 'KR');
+        const unit = isKR ? '원' : 'USD';
+        const ph   = isKR ? '예: 1000000' : 'e.g. 10000';
+        const step = isKR ? '1' : '0.01';
+        const fmtV = v => isKR ? Math.round(v) : parseFloat(v.toFixed(2));
+
+        const badgeStyles = [
+            'background:rgba(34,197,94,.22);color:var(--green)',
+            'background:rgba(34,197,94,.14);color:var(--green)',
+            'background:rgba(234,179,8,.18);color:var(--yellow)',
+            'background:rgba(234,179,8,.12);color:var(--yellow)',
+            'background:rgba(239,68,68,.18);color:var(--red)'
+        ];
+        const priceLabels = ['즉시 진입', 'ATR × 0.3', 'ATR × 0.6', 'ATR × 1.0', 'ATR × 1.5'];
+
+        const priceRows = priceLabels.map((lbl, i) => {
+            const val = sc ? fmtV(sc.prices[i]) : '';
+            return `<div class="fab-price-row">
+                <span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;${badgeStyles[i]};flex-shrink:0;">${i+1}차</span>
+                <span class="fab-price-lbl">${lbl}</span>
+                <input type="number" class="fab-price-input" id="fabP${i}" value="${val}" placeholder="${ph}" oninput="_calcSplitFab()" step="${step}">
+            </div>`;
+        }).join('');
+
+        const autoTag = sc
+            ? `<span style="font-size:10px;color:var(--cyan);font-weight:500;">ATR 자동 입력됨</span>`
+            : `<span style="font-size:10px;color:var(--text3);">직접 입력하세요</span>`;
+
+        document.getElementById('calcFabBody').innerHTML = `
+            <div class="fab-sec-title">진입가 설정 ${autoTag}</div>
+            <div style="background:var(--bg3);border-radius:var(--r2);padding:4px 12px;margin-bottom:12px;">${priceRows}</div>
+
+            <div class="sc-input-grid">
+                <div class="sc-input-group">
+                    <label>총 투자 예산 (${unit})</label>
+                    <input type="number" id="fabBudget" placeholder="${ph}" oninput="_calcSplitFab()" min="0">
+                </div>
+                <div class="sc-input-group">
+                    <label>1차 투자금액 (${unit})</label>
+                    <input type="number" id="fabFirst" placeholder="${ph}" oninput="_calcSplitFab()" min="0">
+                </div>
+            </div>
+            <div class="sc-input-group" style="margin-bottom:14px;">
+                <label>비중 방식</label>
+                <select id="fabMode" onchange="_calcSplitFab()">
+                    <option value="equal">균등 배분 (20% × 5)</option>
+                    <option value="pyramid">역피라미드 — 하락할수록 더 많이 (10·15·20·25·30%)</option>
+                    <option value="front">전방 집중 — 지금 더 많이 (30·25·20·15·10%)</option>
+                </select>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table class="sc-tbl">
+                    <thead><tr>
+                        <th>차수</th><th>진입가</th><th>투자금액</th><th>수량</th><th>누적투자</th><th>평균매수가</th>
+                    </tr></thead>
+                    <tbody id="fabTableBody">
+                        <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;font-size:13px;">💡 예산을 입력하면 자동 계산됩니다</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="fabSummary"></div>
+            ${sc && (sc.tp1 || sc.sl) ? `<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px;padding:8px;background:var(--bg3);border-radius:var(--r2);">
+                손절가: <b>${sc.sl ? (isKR ? Math.round(sc.sl).toLocaleString()+'원' : '$'+sc.sl.toFixed(2)) : 'N/A'}</b>
+                &nbsp;·&nbsp;
+                TP1: <b>${sc.tp1 ? (isKR ? Math.round(sc.tp1).toLocaleString()+'원' : '$'+sc.tp1.toFixed(2)) : 'N/A'}</b>
+            </div>` : ''}
+        `;
+    }
+
+    function _calcSplitFab() {
+        const sc       = window._sc;
+        const isKR     = sc ? sc.isKR : (typeof currentMarket !== 'undefined' && currentMarket === 'KR');
+        const budget   = parseFloat(document.getElementById('fabBudget')?.value) || 0;
+        const firstAmt = parseFloat(document.getElementById('fabFirst')?.value)  || 0;
+        const mode     = document.getElementById('fabMode')?.value || 'equal';
+        const prices   = [0,1,2,3,4].map(i => parseFloat(document.getElementById('fabP'+i)?.value) || 0);
+        const tp1      = sc?.tp1  || null;
+        const slPrice  = sc?.sl   || null;
+
+        if (!budget) {
+            document.getElementById('fabTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;font-size:13px;">💡 예산을 입력하면 자동 계산됩니다</td></tr>';
+            document.getElementById('fabSummary').innerHTML = '';
+            return;
+        }
+
+        const fmtP  = v => isKR ? Math.round(v).toLocaleString()+'원' : '$'+v.toFixed(2);
+        const fmtA  = v => isKR ? Math.round(v).toLocaleString()+'원' : '$'+(v<1000?v.toFixed(2):Math.round(v).toLocaleString());
+        const fmtSh = v => isKR ? Math.round(v).toLocaleString()+'주' : (v>=1?v.toFixed(2):v.toFixed(4))+'주';
+
+        const allW = { equal:[20,20,20,20,20], pyramid:[10,15,20,25,30], front:[30,25,20,15,10] };
+        const remW = { equal:[25,25,25,25],    pyramid:[15,20,30,35],   front:[35,30,20,15]   };
+
+        let amounts;
+        if (firstAmt > 0) {
+            const rem = Math.max(0, budget - firstAmt);
+            const rw  = remW[mode]; const rwS = rw.reduce((a,b)=>a+b,0);
+            amounts = [firstAmt, ...rw.map(w => rem * w / rwS)];
+        } else {
+            amounts = allW[mode].map(w => budget * w / 100);
+        }
+
+        let cumShares = 0, cumInvested = 0;
+        const rows = prices.map((price, i) => {
+            const amt    = amounts[i] || 0;
+            const shares = price > 0 ? amt / price : 0;
+            cumShares   += shares;
+            cumInvested += amt;
+            return { price, amt, shares, cumInvested, avgP: cumShares > 0 ? cumInvested / cumShares : 0 };
+        });
+
+        const badges = [
+            'background:rgba(34,197,94,.22);color:var(--green)',
+            'background:rgba(34,197,94,.14);color:var(--green)',
+            'background:rgba(234,179,8,.18);color:var(--yellow)',
+            'background:rgba(234,179,8,.12);color:var(--yellow)',
+            'background:rgba(239,68,68,.18);color:var(--red)'
+        ];
+
+        document.getElementById('fabTableBody').innerHTML = rows.map((r, i) =>
+            r.price > 0 ? `<tr>
+                <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;${badges[i]}">${i+1}차</span></td>
+                <td>${fmtP(r.price)}</td>
+                <td style="font-weight:600">${fmtA(r.amt)}</td>
+                <td style="color:var(--text2)">${fmtSh(r.shares)}</td>
+                <td style="color:var(--text3);font-size:12px">${fmtA(r.cumInvested)}</td>
+                <td style="font-weight:800;color:var(--cyan)">${fmtP(r.avgP)}</td>
+            </tr>` : ''
+        ).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px;font-size:13px;">진입가를 입력해 주세요</td></tr>';
+
+        const validRows = rows.filter(r => r.price > 0);
+        if (!validRows.length) return;
+        const finalAvg = validRows[validRows.length-1].avgP;
+        const totalSh  = cumShares;
+
+        let html = `<div class="sc-summary">
+            <div class="sc-sum-item"><div class="sc-sum-label">총 투자금액</div><div class="sc-sum-val">${fmtA(budget)}</div></div>
+            <div class="sc-sum-item"><div class="sc-sum-label">전량 매수시 평균가</div><div class="sc-sum-val" style="color:var(--cyan)">${fmtP(finalAvg)}</div></div>`;
+
+        if (tp1 && tp1 > finalAvg) {
+            const profit = (tp1-finalAvg)*totalSh, pct = (tp1-finalAvg)/finalAvg*100;
+            html += `<div class="sc-sum-item" style="border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.05);">
+                <div class="sc-sum-label">TP1 (${fmtP(tp1)}) 도달시 수익</div>
+                <div class="sc-sum-val" style="color:var(--green)">+${fmtA(profit)} <small style="font-size:11px">(+${pct.toFixed(1)}%)</small></div>
+            </div>`;
+        }
+        if (slPrice && slPrice < finalAvg) {
+            const loss = (slPrice-finalAvg)*totalSh, pct = (slPrice-finalAvg)/finalAvg*100;
+            html += `<div class="sc-sum-item" style="border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.05);">
+                <div class="sc-sum-label">손절 (${fmtP(slPrice)}) 도달시 손실</div>
+                <div class="sc-sum-val" style="color:var(--red)">${fmtA(loss)} <small style="font-size:11px">(${pct.toFixed(1)}%)</small></div>
+            </div>`;
+        }
+        html += '</div>';
+
+        if (tp1 && slPrice && tp1 > finalAvg && slPrice < finalAvg) {
+            const rr = (tp1-finalAvg)/(finalAvg-slPrice);
+            const col = rr>=2 ? 'var(--green)' : rr>=1.5 ? 'var(--yellow)' : 'var(--red)';
+            html += `<div style="text-align:center;margin-top:10px;padding:9px;background:var(--bg3);border-radius:var(--r2);font-size:13px;color:var(--text2);">
+                평균매수가 기준 손익비 <span style="font-weight:800;font-size:16px;color:${col};margin-left:4px;">1 : ${rr.toFixed(2)}</span>
+            </div>`;
+        }
+        document.getElementById('fabSummary').innerHTML = html;
+    }
+
     Object.assign(window, {
         closeSideNav, toggleSideNav, openSideNav, goHome,
         setMarket, searchStock, setChartInterval, setPeriod,
@@ -6628,8 +6791,31 @@ Rules:
         handleSearchKeydown, openSearchDropdown, closeSearchDropdown, searchSuggest, levenshtein,
         renderRRAnalysis, _applyRRGate, _isFallingKnife,
         detectBullishDivergence, _detectOBVPanic,
-        renderSplitCalc, _calcSplit
+        renderSplitCalc, _calcSplit,
+        openCalcFab, closeCalcFab, _calcSplitFab
     });
     </script>
+
+    <!-- ===== 분할 매수 FAB ===== -->
+    <button id="calcFab" onclick="openCalcFab()" title="분할 매수 계산기" aria-label="분할 매수 계산기">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2"/>
+            <line x1="8" y1="7" x2="16" y2="7"/>
+            <line x1="8" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="10" y2="16"/><line x1="14" y1="16" x2="16" y2="16"/>
+        </svg>
+    </button>
+    <div id="calcFabOverlay" onclick="closeCalcFab()"></div>
+    <div id="calcFabModal" role="dialog" aria-label="분할 매수 계산기">
+        <div class="fab-hdr">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="width:8px;height:8px;border-radius:50%;background:var(--yellow);display:inline-block;flex-shrink:0;"></span>
+                분할 매수 계산기
+                <span id="fabStockLabel" style="font-size:11px;color:var(--cyan);font-weight:500;"></span>
+            </div>
+            <button class="fab-close" onclick="closeCalcFab()">✕</button>
+        </div>
+        <div class="fab-body" id="calcFabBody"></div>
+    </div>
 </body>
 </html>
