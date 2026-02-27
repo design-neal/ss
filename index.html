@@ -835,26 +835,31 @@
         }
 
         /* ===== SPLIT CALC FAB ===== */
-        #calcFab{position:fixed;bottom:24px;right:16px;width:52px;height:52px;border-radius:50%;background:#eab308;color:#000;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(234,179,8,.4);z-index:900;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;}
-        #calcFab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(234,179,8,.55);}
-        #calcFabOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:901;opacity:0;pointer-events:none;transition:opacity .25s;}
-        #calcFabOverlay.open{opacity:1;pointer-events:all;}
-        #calcFabModal{position:fixed;right:0;top:0;bottom:0;width:min(480px,100vw);background:var(--bg1);z-index:902;transform:translateX(110%);transition:transform .32s cubic-bezier(.32,.72,0,1);display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.25);}
-        #calcFabModal.open{transform:translateX(0);}
-        @media(max-width:640px){
-            #calcFab{bottom:calc(20px + env(safe-area-inset-bottom));right:14px;width:48px;height:48px;}
-            #calcFabModal{top:auto;left:0;right:0;bottom:0;width:100%;height:92vh;border-radius:16px 16px 0 0;transform:translateY(110%);box-shadow:0 -8px 40px rgba(0,0,0,.25);}
-            #calcFabModal.open{transform:translateY(0);}
-        }
-        .fab-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);font-size:16px;font-weight:800;flex-shrink:0;}
-        .fab-close{background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px;padding:4px 8px;line-height:1;border-radius:var(--r2);}
-        .fab-close:hover{background:var(--bg3);color:var(--text1);}
-        .fab-body{flex:1;overflow-y:auto;padding:16px 20px;-webkit-overflow-scrolling:touch;}
-        .fab-sec-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 6px;}
+        #calcFab{position:fixed;bottom:32px;right:16px;height:44px;padding:0 16px 0 12px;border-radius:22px;background:#eab308;color:#000;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(234,179,8,.5);z-index:900;display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800;font-family:inherit;white-space:nowrap;transition:transform .15s,box-shadow .15s;}
+        #calcFab:hover{transform:scale(1.05);box-shadow:0 6px 28px rgba(234,179,8,.65);}
+        @media(max-width:640px){#calcFab{bottom:calc(72px + env(safe-area-inset-bottom));right:14px;}}
+        /* 모달 오버레이 */
+        #calcFabOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:901;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;}
+        #calcFabOverlay.open{display:flex;}
+        /* 모달 박스 — GoFundMe 스타일 */
+        #calcFabModal{background:#ffffff;border-radius:20px;width:100%;max-width:460px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.18);overflow:hidden;position:relative;}
+        [data-theme="dark"] #calcFabModal{background:#1e2130;}
+        /* 닫기 버튼 — 우상단 고정 */
+        .fab-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.06);border:none;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;z-index:1;transition:background .15s;}
+        .fab-close:hover{background:rgba(0,0,0,.12);color:#111;}
+        [data-theme="dark"] .fab-close{background:rgba(255,255,255,.1);color:#ccc;}
+        [data-theme="dark"] .fab-close:hover{background:rgba(255,255,255,.18);color:#fff;}
+        /* 헤더 */
+        .fab-hdr{padding:24px 24px 0;flex-shrink:0;}
+        .fab-hdr-title{font-size:18px;font-weight:800;color:var(--text1);margin:0 36px 4px 0;line-height:1.3;}
+        .fab-hdr-sub{font-size:13px;color:var(--text2);margin:0 0 16px;line-height:1.5;}
+        /* 바디 */
+        .fab-body{flex:1;overflow-y:auto;padding:0 24px 24px;-webkit-overflow-scrolling:touch;}
+        .fab-sec-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 6px;}
         .fab-price-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
         .fab-price-row:last-of-type{border-bottom:none;}
-        .fab-price-lbl{font-size:12px;color:var(--text2);flex:1;white-space:nowrap;}
-        .fab-price-input{width:110px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 8px;font-size:13px;color:var(--text1);outline:none;font-family:inherit;text-align:right;}
+        .fab-price-lbl{font-size:13px;color:var(--text2);flex:1;white-space:nowrap;}
+        .fab-price-input{width:120px;background:var(--bg3);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text1);outline:none;font-family:inherit;text-align:right;transition:border-color .15s;}
         .fab-price-input:focus{border-color:var(--cyan);}
 
         /* ===== SPLIT CALC ===== */
@@ -6594,7 +6599,7 @@ Rules:
     // ===========================
     function openCalcFab() {
         document.getElementById('calcFabOverlay').classList.add('open');
-        document.getElementById('calcFabModal').classList.add('open');
+        document.body.style.overflow = 'hidden'; // 뒤 스크롤 차단
         // 현재 종목 라벨
         const lbl = document.getElementById('fabStockLabel');
         if (lbl) {
@@ -6606,7 +6611,7 @@ Rules:
 
     function closeCalcFab() {
         document.getElementById('calcFabOverlay').classList.remove('open');
-        document.getElementById('calcFabModal').classList.remove('open');
+        document.body.style.overflow = '';
     }
 
     function renderCalcFabContent() {
@@ -6798,24 +6803,28 @@ Rules:
 
     <!-- ===== 분할 매수 FAB ===== -->
     <button id="calcFab" onclick="openCalcFab()" title="분할 매수 계산기" aria-label="분할 매수 계산기">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
             <rect x="4" y="2" width="16" height="20" rx="2"/>
             <line x1="8" y1="7" x2="16" y2="7"/>
             <line x1="8" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="16" y2="12"/>
             <line x1="8" y1="16" x2="10" y2="16"/><line x1="14" y1="16" x2="16" y2="16"/>
         </svg>
+        계산기
     </button>
-    <div id="calcFabOverlay" onclick="closeCalcFab()"></div>
-    <div id="calcFabModal" role="dialog" aria-label="분할 매수 계산기">
-        <div class="fab-hdr">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span style="width:8px;height:8px;border-radius:50%;background:var(--yellow);display:inline-block;flex-shrink:0;"></span>
-                분할 매수 계산기
-                <span id="fabStockLabel" style="font-size:11px;color:var(--cyan);font-weight:500;"></span>
+    <!-- 모달 오버레이 (클릭 시 닫힘) -->
+    <div id="calcFabOverlay" onclick="closeCalcFab()">
+        <!-- 모달 박스 (클릭 전파 차단) -->
+        <div id="calcFabModal" role="dialog" aria-modal="true" aria-label="분할 매수 계산기" onclick="event.stopPropagation()">
+            <!-- X 닫기 버튼 — 우상단 절대 위치 -->
+            <button class="fab-close" onclick="closeCalcFab()" aria-label="닫기">✕</button>
+            <!-- 헤더 -->
+            <div class="fab-hdr">
+                <p class="fab-hdr-title">분할 매수 계산기 <span id="fabStockLabel" style="font-size:13px;color:var(--cyan);font-weight:600;"></span></p>
+                <p class="fab-hdr-sub">진입가와 예산을 입력하면 차수별 매수 금액을 자동으로 계산합니다.</p>
             </div>
-            <button class="fab-close" onclick="closeCalcFab()">✕</button>
+            <!-- 바디 -->
+            <div class="fab-body" id="calcFabBody"></div>
         </div>
-        <div class="fab-body" id="calcFabBody"></div>
     </div>
 </body>
 </html>
