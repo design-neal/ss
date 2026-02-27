@@ -812,6 +812,19 @@
             .sdrop-name{font-size:12px;}
         }
 
+        /* ===== ENTRY / EXIT ROW (나란히) ===== */
+        .entry-exit-row{display:flex;align-items:start;}
+        .entry-exit-row>.card{flex:1;min-width:0;}
+        @media(max-width:640px){
+            .entry-exit-row{flex-direction:column;}
+            .entry-exit-row>.card{width:100%;}
+        }
+        @media(min-width:900px){
+            .entry-exit-row>.card{margin:4px 8px;}
+            .entry-exit-row>.card:first-child{margin-left:32px;}
+            .entry-exit-row>.card:last-child{margin-right:32px;}
+        }
+
         /* ===== R/R ANALYSIS CARD ===== */
         .rr-basis-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;
             background:rgba(34,211,238,.12);color:var(--cyan);margin-left:auto;}
@@ -1166,6 +1179,7 @@
                     </div>
                 </div>
                 <div class="tab-col-right">
+                    <div class="entry-exit-row">
                     <div class="card">
                         <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>단타 진입 시점 <span class="trade-badge day-badge">DAY</span></div>
                         <div class="entry-card" id="dayEntryCard">
@@ -1191,6 +1205,7 @@
                                 <div class="text">단타는 당일 청산이 원칙입니다. 오버나잇 리스크를 최소화하세요.</div>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>
