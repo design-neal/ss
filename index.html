@@ -2960,6 +2960,49 @@
         return obv;
     }
 
+    // ── 불리시 다이버전스 탐지 ─────────────────────────────────────────────────
+    function detectBullishDivergence(closes, rsiArr, lookback = 40) {
+        const result = { detected: false, rsiDiff: 0 };
+        if (!closes || !rsiArr || closes.length < lookback + 4) return result;
+        const len = closes.length;
+        const start = Math.max(2, len - lookback);
+        const minima = [];
+        for (let i = start; i < len - 2; i++) {
+            if (closes[i] == null || rsiArr[i] == null) continue;
+            if (closes[i] < closes[i-1] && closes[i] < closes[i-2] &&
+                closes[i] < closes[i+1] && closes[i] < closes[i+2]) {
+                minima.push({ price: closes[i], rsi: rsiArr[i] });
+            }
+        }
+        if (minima.length < 2) return result;
+        const m1 = minima[minima.length - 2]; // 이전 저점
+        const m2 = minima[minima.length - 1]; // 최근 저점
+        if (m2.price < m1.price && m2.rsi > m1.rsi) {
+            result.detected = true;
+            result.rsiDiff = m2.rsi - m1.rsi;
+        }
+        return result;
+    }
+
+    // ── OBV 패닉 투매 감지 ──────────────────────────────────────────────────────
+    function _detectOBVPanic(obvArr, volumes, closes, period = 10) {
+        const result = { panicSell: false, obvDeclining: false, volSpike: false };
+        if (!obvArr || obvArr.length < period + 2) return result;
+        const len = obvArr.length;
+        const half = Math.floor(period / 2);
+        const obvRecent  = obvArr.slice(len - half).reduce((a,b) => a+b, 0) / half;
+        const obvEarlier = obvArr.slice(len - period, len - half).reduce((a,b) => a+b, 0) / half;
+        result.obvDeclining = obvRecent < obvEarlier;
+        const volSlice = volumes.slice(-period - 1, -1).filter(v => v != null);
+        if (volSlice.length > 0) {
+            const avgVol = volSlice.reduce((a,b) => a+b, 0) / volSlice.length;
+            const lastVol = volumes[volumes.length - 1];
+            result.volSpike = lastVol != null && lastVol > avgVol * 1.8;
+        }
+        result.panicSell = result.obvDeclining && result.volSpike;
+        return result;
+    }
+
     // ADX (Average Directional Index)
     function calcADX(highs, lows, closes, period = 14) {
         const pDI = [], mDI = [], adx = [];
@@ -5452,85 +5495,141 @@ Rules:
     }
 
     // =====================
-    // 단타 진입 시점
+    // 단타 진입 시점 (과매도 기술적 반등)
     // =====================
     function renderDayEntry() {
         const d = getAnalysisData();
-        const { closes, volumes, highs, lows, price, ma5, ma10, ma20, rsi, macdLine, signalLine, histogram, bb, stoch } = d;
+        const { closes, volumes, highs, lows, price, rsi, bb, stoch, histogram } = d;
         const isKR = currentMarket === 'KR';
-        const fmtP = v => isKR ? Math.round(v).toLocaleString() + '원' : '$' + v.toFixed(2);
+        const fmtP = v => isKR ? Math.round(v).toLocaleString()+'원' : '$'+v.toFixed(2);
+        const fmtPct = (v, base) => v && base
+            ? ((v-base)/base*100 > 0 ? '+' : '') + ((v-base)/base*100).toFixed(1)+'%' : '';
 
-        const checks = []; let passCount = 0; let totalChecks = 0;
-        const lma5 = ma5.filter(v=>v!=null).pop(); const lma10 = ma10.filter(v=>v!=null).pop();
-        const lastRSI = rsi.filter(v=>v!=null).pop() || 50;
-        const lastK = stoch.kLine.filter(v=>v!=null).pop() || 50;
-        const prevK = stoch.kLine.filter(v=>v!=null).slice(-2)[0] || 50;
+        // 스칼라 추출 (모두 배열에서 마지막 유효값)
+        const lastRSI  = rsi.filter(v=>v!=null).pop() || 50;
+        const bbLower  = bb.lower.filter(v=>v!=null).pop();
+        const bbMid    = bb.middle.filter(v=>v!=null).pop(); // TP1
+        const lastK    = stoch.kLine.filter(v=>v!=null).pop() || 50;
+        const prevK    = stoch.kLine.filter(v=>v!=null).slice(-2)[0] || 50;
+        const histClean= histogram.filter(v=>v!=null);
+        const histNow  = histClean[histClean.length-1] || 0;
+        const histPrev = histClean[histClean.length-2] || 0;
 
-        // 1. MA5 > MA10 정배열
+        // OBV 패닉·다이버전스 계산
+        const obvArr   = calcOBV(closes, volumes);
+        const panicRes = _detectOBVPanic(obvArr, volumes, closes);
+        const divRes   = detectBullishDivergence(closes, rsi, 40);
+
+        // 목표가 계산
+        const tp1 = bbMid; // BB 중심선 (MA20)
+        const recentH = highs.slice(-20).filter(v=>v!=null);
+        const recentL = lows.slice(-20).filter(v=>v!=null);
+        const swingHigh = recentH.length ? Math.max(...recentH) : null;
+        const swingLow  = recentL.length ? Math.min(...recentL) : null;
+        const tp2 = (swingHigh && swingLow) ? swingLow + (swingHigh - swingLow) * 0.382 : null; // Fib 38.2%
+        const sl  = lows.filter(v=>v!=null).slice(-1)[0] || null; // 진입봉 저점
+
+        // 6개 체크
+        const checks = []; let passCount = 0, totalChecks = 0;
+
+        // A. BB 하단 이탈
         totalChecks++;
-        if (price > lma5 && lma5 > lma10) { checks.push({ status:'pass', label:'MA5>MA10 정배열', desc:'단기 이평선 정배열로 상승 모멘텀이 확인됩니다.' }); passCount++; }
-        else if (lma5 > lma10) { checks.push({ status:'warn', label:'MA5>MA10이나 주가 이탈', desc:'이평선은 정배열이나 주가가 MA5 아래입니다.' }); }
-        else { checks.push({ status:'fail', label:'단기 이평선 역배열', desc:'MA5 < MA10 역배열. 단기 하락 추세.' }); }
-
-        // 2. RSI 단타 적합 구간
-        totalChecks++;
-        const prevRSIs = rsi.filter(v=>v!=null).slice(-5);
-        const rsiUp = prevRSIs.length >= 3 && prevRSIs[prevRSIs.length-1] > prevRSIs[prevRSIs.length-3];
-        if (lastRSI >= 45 && lastRSI <= 65 && rsiUp) { checks.push({ status:'pass', label:`RSI ${lastRSI.toFixed(1)} 상승 중`, desc:'과매수 아닌 상태에서 RSI 상승. 단타 진입 적합.' }); passCount++; }
-        else if (lastRSI <= 30) { checks.push({ status:'pass', label:`RSI ${lastRSI.toFixed(1)} 과매도 반등`, desc:'과매도 구간. 기술적 반등 단타 기회.' }); passCount++; }
-        else if (lastRSI >= 75) { checks.push({ status:'fail', label:`RSI ${lastRSI.toFixed(1)} 과매수`, desc:'극단적 과매수. 고점 물릴 위험.' }); }
-        else { checks.push({ status:'warn', label:`RSI ${lastRSI.toFixed(1)} 중립`, desc:'뚜렷한 단타 진입 신호 없음.' }); }
-
-        // 3. Stochastic 반등
-        totalChecks++;
-        if (lastK <= 25 && lastK > prevK) { checks.push({ status:'pass', label:'Stochastic 과매도 반등', desc:`K ${lastK.toFixed(0)} 과매도에서 반등 시작. 단타 매수 타이밍.` }); passCount++; }
-        else if (lastK >= 80) { checks.push({ status:'fail', label:'Stochastic 과매수', desc:`K ${lastK.toFixed(0)} 과매수. 단타 진입 위험.` }); }
-        else if (lastK > prevK) { checks.push({ status:'warn', label:'Stochastic 상승 중', desc:`K ${lastK.toFixed(0)} 상승 중이나 아직 명확한 신호는 아님.` }); }
-        else { checks.push({ status:'fail', label:'Stochastic 하락 중', desc:`K ${lastK.toFixed(0)} 하락 중. 반등 확인 필요.` }); }
-
-        // 4. 거래량 급증
-        totalChecks++;
-        if (volumes.length >= 20) {
-            const curVol = volumes[volumes.length-1] || 0;
-            const avgVol20 = volumes.slice(-20).reduce((a,b)=>a+b,0)/20;
-            const vr = curVol/avgVol20;
-            const isUp = closes[closes.length-1] >= (closes[closes.length-2]||closes[closes.length-1]);
-            if (vr >= 1.5 && isUp) { checks.push({ status:'pass', label:`거래량 ${Math.round(vr*100)}% 급증+상승`, desc:'매수세 강한 유입. 단타 진입 유리.' }); passCount++; }
-            else if (vr >= 1.5 && !isUp) { checks.push({ status:'fail', label:'거래량 급증+하락', desc:'투매성 매도. 단타 매수 금지.' }); }
-            else if (vr < 0.5) { checks.push({ status:'fail', label:'거래량 극감', desc:'유동성 부족. 단타 부적합.' }); }
-            else { checks.push({ status:'warn', label:'거래량 보통', desc:'뚜렷한 거래량 신호 없음.' }); }
+        if (bbLower && price < bbLower) {
+            const pct = ((price-bbLower)/bbLower*100).toFixed(1);
+            checks.push({ status:'pass', label:`BB 하단 이탈 (${pct}%)`, desc:'볼린저 밴드 하단 돌파. 극단적 낙폭으로 역추세 반등 구간 진입.' });
+            passCount++;
+        } else if (bbLower && price < bbLower * 1.02) {
+            checks.push({ status:'warn', label:'BB 하단 근접', desc:'볼린저 하단 2% 이내. 이탈 여부 확인 필요.' });
+        } else {
+            checks.push({ status:'fail', label:'BB 하단 이탈 없음', desc:'아직 과매도 극단 영역 미진입.' });
         }
 
-        // 5. 볼린저밴드 위치
+        // B. 극단적 RSI 과매도
         totalChecks++;
-        const lbbu = bb.upper.filter(v=>v!=null).pop(); const lbbl = bb.lower.filter(v=>v!=null).pop();
-        if (lbbu && lbbl) {
-            const bbPos = (price - lbbl) / (lbbu - lbbl);
-            if (bbPos >= 0.1 && bbPos <= 0.4) { checks.push({ status:'pass', label:'BB 하단~중앙 (반등 구간)', desc:'밴드 하단 근처. 반등 단타 적합.' }); passCount++; }
-            else if (bbPos < 0) { checks.push({ status:'warn', label:'BB 하단 이탈', desc:'급락 중. 반등 확인 후 진입.' }); }
-            else if (bbPos > 0.85) { checks.push({ status:'fail', label:'BB 상단 근접', desc:'이미 많이 상승. 눌림목 대기.' }); }
-            else { checks.push({ status:'warn', label:'BB 중앙', desc:'방향성 불확실.' }); }
+        if (lastRSI <= 20) {
+            checks.push({ status:'pass', label:`RSI ${lastRSI.toFixed(1)} — 극단 과매도 (≤20)`, desc:'투매 극한. 역추세 반등 타이밍 최적 구간.' });
+            passCount++;
+        } else if (lastRSI <= 30) {
+            checks.push({ status:'pass', label:`RSI ${lastRSI.toFixed(1)} — 과매도 (≤30)`, desc:'RSI 과매도 구간. 반등 신호 병행 확인 필요.' });
+            passCount++;
+        } else {
+            checks.push({ status:'fail', label:`RSI ${lastRSI.toFixed(1)} — 과매도 미달`, desc:'RSI 30 초과. 역추세 단타 조건 미충족.' });
         }
 
-        // 6. 전일대비 변동률
+        // C. 패닉 투매 OBV
         totalChecks++;
-        const chg = closes.length >= 2 ? (closes[closes.length-1]-closes[closes.length-2])/closes[closes.length-2]*100 : 0;
-        if (chg >= 1 && chg <= 5) { checks.push({ status:'pass', label:`전일대비 +${chg.toFixed(1)}%`, desc:'적당한 상승폭으로 추가 상승 여력 있음.' }); passCount++; }
-        else if (chg > 5) { checks.push({ status:'warn', label:`전일대비 +${chg.toFixed(1)}%`, desc:'급등 후 추격 매수는 위험. 눌림목 대기.' }); }
-        else if (chg < -3) { checks.push({ status:'fail', label:`전일대비 ${chg.toFixed(1)}%`, desc:'급락 중. 바닥 확인 후 진입.' }); }
-        else { checks.push({ status:'warn', label:`전일대비 ${chg.toFixed(1)}%`, desc:'소폭 변동. 방향성 확인 필요.' }); }
+        if (panicRes.panicSell) {
+            checks.push({ status:'pass', label:'패닉 투매 확인 (OBV)', desc:'OBV 하락 + 비정상 거래량 스파이크 동시 감지. 세력 바닥 매집 가능성.' });
+            passCount++;
+        } else {
+            const parts = [];
+            if (!panicRes.obvDeclining) parts.push('OBV 하락 미확인');
+            if (!panicRes.volSpike) parts.push('거래량 스파이크 없음');
+            checks.push({ status:'warn', label:'패닉 투매 미확인', desc: parts.join(' · ') || '투매 조건 불완전' });
+        }
 
-        const stopLoss = price * 0.97; // 단타 -3% 손절
-        const target1 = price * 1.02; const target2 = price * 1.05;
-        const rr = ((target2-price)/(price-stopLoss)).toFixed(1);
+        // D. 상승 다이버전스 (★ 가장 강한 신호)
+        totalChecks++;
+        if (divRes.detected) {
+            checks.push({ status:'pass', label:`★ RSI 상승 다이버전스 (+${divRes.rsiDiff.toFixed(1)}pt)`, desc:'가격 Lower Low + RSI Higher Low 패턴 감지. 역추세 단타 최고 승률 신호.' });
+            passCount++;
+        } else {
+            checks.push({ status:'warn', label:'다이버전스 미감지', desc:'최근 40봉 내 상승 다이버전스 없음. 반등 신뢰도 낮음.' });
+        }
+
+        // E. Stochastic 과매도 반등
+        totalChecks++;
+        if (lastK <= 25 && lastK > prevK) {
+            checks.push({ status:'pass', label:`Stochastic K ${lastK.toFixed(0)} 반등 전환`, desc:'극단 과매도에서 K 상승 전환. 단기 반등 타이밍.' });
+            passCount++;
+        } else if (lastK <= 25) {
+            checks.push({ status:'warn', label:`Stochastic K ${lastK.toFixed(0)} — 방향 미전환`, desc:'과매도 구간이나 K 반등 미확인. 다음 캔들 확인 후 진입.' });
+        } else {
+            checks.push({ status:'fail', label:`Stochastic K ${lastK.toFixed(0)} — 과매도 아님`, desc:'과매도 영역(K≤25) 미진입.' });
+        }
+
+        // F. MACD 히스토그램 반전
+        totalChecks++;
+        if (histNow < 0 && histNow > histPrev) {
+            checks.push({ status:'pass', label:'MACD 히스토그램 반전', desc:`음수 구간에서 상승 반전 (${histPrev.toFixed(3)}→${histNow.toFixed(3)}). 매도 압력 약화.` });
+            passCount++;
+        } else if (histNow < 0) {
+            checks.push({ status:'warn', label:'MACD 음수 (반전 대기)', desc:`히스토그램 음수 지속(${histNow.toFixed(3)}). 방향 전환 미확인.` });
+        } else {
+            checks.push({ status:'fail', label:'MACD 양수 — 역추세 구간 아님', desc:'과매도 환경이 아닌 상태.' });
+        }
+
+        // 다이버전스 배지 + 전략 HTML
+        const divBadge = divRes.detected
+            ? `<div class="rr-knife-warning" style="border-color:var(--green);background:rgba(34,197,94,.08);margin-bottom:8px;">
+                   <span style="font-size:18px;line-height:1">📈</span>
+                   <div>
+                     <div class="rr-knife-title" style="color:var(--green)">RSI 상승 다이버전스 감지 — 강한 매수 신호</div>
+                     <div class="rr-knife-desc">가격 Lower Low + RSI Higher Low 패턴. 역추세 단타 최고 승률 패턴.</div>
+                   </div>
+               </div>`
+            : '';
+
         const stratHtml = `
-            <div class="entry-strategy-title" style="color:#f97316">단타 진입 전략</div>
-            <div class="entry-strategy-row"><span class="entry-strategy-label">진입가</span><span class="entry-strategy-value">${fmtP(price)}</span></div>
-            <div class="entry-strategy-row"><span class="entry-strategy-label">손절 (-3%)</span><span class="entry-strategy-value" style="color:var(--red)">${fmtP(stopLoss)}</span></div>
-            <div class="entry-strategy-row"><span class="entry-strategy-label">1차 익절 (+2%)</span><span class="entry-strategy-value" style="color:var(--green)">${fmtP(target1)}</span></div>
-            <div class="entry-strategy-row"><span class="entry-strategy-label">2차 익절 (+5%)</span><span class="entry-strategy-value" style="color:var(--green)">${fmtP(target2)}</span></div>
-            <div class="entry-strategy-row"><span class="entry-strategy-label">손익비</span><span class="entry-strategy-value" style="color:var(--cyan)">1 : ${rr}</span></div>
-            <div class="entry-strategy-row"><span class="entry-strategy-label">보유 기간</span><span class="entry-strategy-value">당일~1일</span></div>`;
+            ${divBadge}
+            <div class="entry-strategy-title" style="color:var(--cyan)">과매도 반등 전략 (역추세 단타)</div>
+            <div class="entry-strategy-row">
+                <span class="entry-strategy-label">손절가 (진입봉 저점)</span>
+                <span class="entry-strategy-value" style="color:var(--red)">${fmtP(sl)} <small style="color:var(--text2)">${fmtPct(sl,price)}</small></span>
+            </div>
+            <div class="entry-strategy-row">
+                <span class="entry-strategy-label">1차 목표 (BB 중심선)</span>
+                <span class="entry-strategy-value" style="color:var(--green)">${tp1 ? fmtP(tp1) : 'N/A'} <small style="color:var(--text2)">${fmtPct(tp1,price)}</small></span>
+            </div>
+            <div class="entry-strategy-row">
+                <span class="entry-strategy-label">2차 목표 (Fib 38.2%)</span>
+                <span class="entry-strategy-value" style="color:var(--green)">${tp2 ? fmtP(tp2) : 'N/A'} <small style="color:var(--text2)">${fmtPct(tp2,price)}</small></span>
+            </div>
+            <div class="entry-strategy-row">
+                <span class="entry-strategy-label">보유 기간</span>
+                <span class="entry-strategy-value">당일~1일 (빠른 익절)</span>
+            </div>`;
+
         renderTimingCard('day', 'entry', checks, passCount, totalChecks, stratHtml);
     }
 
@@ -6328,7 +6427,8 @@ Rules:
         setOptionsStrikeRange, toggleOptionsVolFilter, sortOptionsBy,
         manualAnalysisRefresh, pwaInstall,
         handleSearchKeydown, openSearchDropdown, closeSearchDropdown, searchSuggest, levenshtein,
-        renderRRAnalysis, _applyRRGate, _isFallingKnife
+        renderRRAnalysis, _applyRRGate, _isFallingKnife,
+        detectBullishDivergence, _detectOBVPanic
     });
     </script>
 </body>
