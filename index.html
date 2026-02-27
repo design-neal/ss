@@ -5509,6 +5509,18 @@ Rules:
         const fmtPct = (v, base) => v && base
             ? ((v-base)/base*100 > 0 ? '+' : '') + ((v-base)/base*100).toFixed(1)+'%' : '';
 
+        // ATR 계산 (분할 진입가 산출용)
+        const _q = stockData.indicators.quote[0];
+        const atrRaw = calcATR(_q.high, _q.low, _q.close);
+        const atr = atrRaw.filter(v => v != null).pop() || 0;
+
+        // 5단계 분할 진입가 (ATR 기반)
+        const e1 = price;
+        const e2 = price - atr * 0.3;
+        const e3 = price - atr * 0.6;
+        const e4 = price - atr * 1.0;
+        const e5 = price - atr * 1.5;
+
         // 스칼라 추출 (모두 배열에서 마지막 유효값)
         const lastRSI  = rsi.filter(v=>v!=null).pop() || 50;
         const bbLower  = bb.lower.filter(v=>v!=null).pop();
@@ -5617,9 +5629,30 @@ Rules:
         const stratHtml = `
             ${divBadge}
             <div class="entry-strategy-title" style="color:var(--cyan)">과매도 반등 전략 (역추세 단타)</div>
+            <div class="entry-strategy-title" style="color:var(--yellow);margin-top:10px;margin-bottom:2px;font-size:12px;font-weight:700;">📊 분할 매수 진입가 (ATR 기반)</div>
             <div class="entry-strategy-row">
+                <span class="entry-strategy-label"><span style="background:rgba(34,197,94,.2);color:var(--green);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">1차</span>&nbsp;즉시 진입</span>
+                <span class="entry-strategy-value">${fmtP(e1)} <small style="color:var(--text3)">현재가</small></span>
+            </div>
+            <div class="entry-strategy-row">
+                <span class="entry-strategy-label"><span style="background:rgba(34,197,94,.15);color:var(--green);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">2차</span>&nbsp;ATR ×0.3</span>
+                <span class="entry-strategy-value">${fmtP(e2)} <small style="color:var(--text2)">${fmtPct(e2,price)}</small></span>
+            </div>
+            <div class="entry-strategy-row">
+                <span class="entry-strategy-label"><span style="background:rgba(234,179,8,.15);color:var(--yellow);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">3차</span>&nbsp;ATR ×0.6</span>
+                <span class="entry-strategy-value">${fmtP(e3)} <small style="color:var(--text2)">${fmtPct(e3,price)}</small></span>
+            </div>
+            <div class="entry-strategy-row">
+                <span class="entry-strategy-label"><span style="background:rgba(234,179,8,.12);color:var(--yellow);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">4차</span>&nbsp;ATR ×1.0</span>
+                <span class="entry-strategy-value">${fmtP(e4)} <small style="color:var(--text2)">${fmtPct(e4,price)}</small></span>
+            </div>
+            <div class="entry-strategy-row">
+                <span class="entry-strategy-label"><span style="background:rgba(239,68,68,.15);color:var(--red);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">5차</span>&nbsp;ATR ×1.5</span>
+                <span class="entry-strategy-value">${fmtP(e5)} <small style="color:var(--text2)">${fmtPct(e5,price)}</small></span>
+            </div>
+            <div class="entry-strategy-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">
                 <span class="entry-strategy-label">손절가 (진입봉 저점)</span>
-                <span class="entry-strategy-value" style="color:var(--red)">${fmtP(sl)} <small style="color:var(--text2)">${fmtPct(sl,price)}</small></span>
+                <span class="entry-strategy-value" style="color:var(--red)">${sl ? fmtP(sl) : 'N/A'} <small style="color:var(--text2)">${fmtPct(sl,price)}</small></span>
             </div>
             <div class="entry-strategy-row">
                 <span class="entry-strategy-label">1차 목표 (BB 중심선)</span>
