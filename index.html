@@ -5478,9 +5478,17 @@ Rules:
             </div>`;
         const mColor = isEntry ? (score>=70?'#10b981':score>=40?'#f59e0b':'#ef4444') : (score>=70?'#ef4444':score>=40?'#f59e0b':'#10b981');
         const mEl = document.getElementById(elId + 'Meter');
-        if (mEl) mEl.innerHTML = `
-            <div class="entry-meter-bar"><div class="entry-meter-fill" style="width:${score}%;background:linear-gradient(90deg,${mColor},${mColor}aa)"></div><div class="entry-meter-pointer" style="left:${score}%"></div></div>
-            <div class="entry-meter-labels"><span>${isEntry?'매수 부적합':'보유 유지'}</span><span>조건부</span><span>${isEntry?'적극 매수':'즉시 매도'}</span></div>`;
+        if (mEl) {
+            mEl.innerHTML = `
+                <div class="entry-meter-bar"><div class="entry-meter-fill" style="width:0%;background:linear-gradient(90deg,${mColor},${mColor}aa)"></div><div class="entry-meter-pointer" style="left:0%"></div></div>
+                <div class="entry-meter-labels"><span>${isEntry?'매수 부적합':'보유 유지'}</span><span>조건부</span><span>${isEntry?'적극 매수':'즉시 매도'}</span></div>`;
+            setTimeout(() => {
+                const fill = mEl.querySelector('.entry-meter-fill');
+                const pointer = mEl.querySelector('.entry-meter-pointer');
+                if (fill) fill.style.width = score + '%';
+                if (pointer) pointer.style.left = score + '%';
+            }, 50);
+        }
         const iconMap = { pass: '&#10003;', fail: '&#10007;', warn: '!' };
         const cEl = document.getElementById(elId + 'Checklist');
         if (cEl) cEl.innerHTML = checks.map(ck => `
