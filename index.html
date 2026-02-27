@@ -6614,6 +6614,22 @@ Rules:
         document.body.style.overflow = '';
     }
 
+    // 숫자 입력 콤마 포매팅 헬퍼
+    function _fabCommaFmt(el) {
+        const cursorPos = el.selectionStart;
+        const prevLen   = el.value.length;
+        // 숫자·소수점만 남기고 콤마 삽입
+        const raw = el.value.replace(/,/g, '').replace(/[^\d.]/g, '');
+        if (!raw) { el.value = ''; _calcSplitFab(); return; }
+        const parts = raw.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        el.value = parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0];
+        // 커서 위치 보정
+        const diff = el.value.length - prevLen;
+        el.setSelectionRange(cursorPos + diff, cursorPos + diff);
+        _calcSplitFab();
+    }
+
     function renderCalcFabContent() {
         const sc   = window._sc;
         const isKR = sc ? sc.isKR : (typeof currentMarket !== 'undefined' && currentMarket === 'KR');
@@ -6631,12 +6647,13 @@ Rules:
         ];
         const priceLabels = ['즉시 진입', 'ATR × 0.3', 'ATR × 0.6', 'ATR × 1.0', 'ATR × 1.5'];
 
+        const toComma = v => v === '' ? '' : Number(v).toLocaleString('en-US', {maximumFractionDigits: isKR ? 0 : 2});
         const priceRows = priceLabels.map((lbl, i) => {
-            const val = sc ? fmtV(sc.prices[i]) : '';
+            const val = sc ? toComma(fmtV(sc.prices[i])) : '';
             return `<div class="fab-price-row">
                 <span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;${badgeStyles[i]};flex-shrink:0;">${i+1}차</span>
                 <span class="fab-price-lbl">${lbl}</span>
-                <input type="number" class="fab-price-input" id="fabP${i}" value="${val}" placeholder="${ph}" oninput="_calcSplitFab()" step="${step}">
+                <input type="text" inputmode="decimal" class="fab-price-input" id="fabP${i}" value="${val}" placeholder="${ph}" oninput="_fabCommaFmt(this)">
             </div>`;
         }).join('');
 
@@ -6651,11 +6668,11 @@ Rules:
             <div class="sc-input-grid">
                 <div class="sc-input-group">
                     <label>총 투자 예산 (${unit})</label>
-                    <input type="number" id="fabBudget" placeholder="${ph}" oninput="_calcSplitFab()" min="0">
+                    <input type="text" inputmode="decimal" id="fabBudget" placeholder="${ph}" oninput="_fabCommaFmt(this)">
                 </div>
                 <div class="sc-input-group">
                     <label>1차 투자금액 (${unit})</label>
-                    <input type="number" id="fabFirst" placeholder="${ph}" oninput="_calcSplitFab()" min="0">
+                    <input type="text" inputmode="decimal" id="fabFirst" placeholder="${ph}" oninput="_fabCommaFmt(this)">
                 </div>
             </div>
             <div class="sc-input-group" style="margin-bottom:14px;">
@@ -6689,10 +6706,11 @@ Rules:
     function _calcSplitFab() {
         const sc       = window._sc;
         const isKR     = sc ? sc.isKR : (typeof currentMarket !== 'undefined' && currentMarket === 'KR');
-        const budget   = parseFloat(document.getElementById('fabBudget')?.value) || 0;
-        const firstAmt = parseFloat(document.getElementById('fabFirst')?.value)  || 0;
+        const stripC   = v => (v||'').replace(/,/g,'');
+        const budget   = parseFloat(stripC(document.getElementById('fabBudget')?.value)) || 0;
+        const firstAmt = parseFloat(stripC(document.getElementById('fabFirst')?.value))  || 0;
         const mode     = document.getElementById('fabMode')?.value || 'equal';
-        const prices   = [0,1,2,3,4].map(i => parseFloat(document.getElementById('fabP'+i)?.value) || 0);
+        const prices   = [0,1,2,3,4].map(i => parseFloat(stripC(document.getElementById('fabP'+i)?.value)) || 0);
         const tp1      = sc?.tp1  || null;
         const slPrice  = sc?.sl   || null;
 
@@ -6797,7 +6815,7 @@ Rules:
         renderRRAnalysis, _applyRRGate, _isFallingKnife,
         detectBullishDivergence, _detectOBVPanic,
         renderSplitCalc, _calcSplit,
-        openCalcFab, closeCalcFab, _calcSplitFab
+        openCalcFab, closeCalcFab, _calcSplitFab, _fabCommaFmt
     });
     </script>
 
