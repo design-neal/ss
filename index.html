@@ -833,6 +833,24 @@
             .entry-exit-row>.card:last-child{margin-right:0;}
         }
 
+        /* ===== SPLIT CALC ===== */
+        .sc-input-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+        .sc-input-group{display:flex;flex-direction:column;gap:5px;}
+        .sc-input-group label{font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+        .sc-input-group input,.sc-input-group select{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:8px 12px;font-size:13px;color:var(--text1);outline:none;font-family:inherit;width:100%;box-sizing:border-box;}
+        .sc-input-group input:focus,.sc-input-group select:focus{border-color:var(--cyan);}
+        .sc-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+        .sc-tbl th{padding:7px 10px;text-align:right;font-weight:600;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;}
+        .sc-tbl th:first-child{text-align:left;}
+        .sc-tbl td{padding:9px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap;}
+        .sc-tbl td:first-child{text-align:left;}
+        .sc-tbl tr:last-child td{border-bottom:none;}
+        .sc-tbl tbody tr:hover td{background:rgba(255,255,255,.02);}
+        .sc-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:12px;border-top:1px solid var(--border);margin-top:8px;}
+        .sc-sum-item{background:var(--bg3);border-radius:var(--r2);padding:10px 12px;}
+        .sc-sum-label{font-size:11px;color:var(--text3);margin-bottom:3px;}
+        .sc-sum-val{font-size:14px;font-weight:700;}
+
         /* ===== R/R ANALYSIS CARD ===== */
         .rr-basis-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;
             background:rgba(34,211,238,.12);color:var(--cyan);margin-left:auto;}
@@ -1215,6 +1233,7 @@
                         </div>
                     </div>
                     </div>
+                    <div id="splitCalcWrap"></div>
                 </div>
             </div>
 
@@ -5629,28 +5648,7 @@ Rules:
         const stratHtml = `
             ${divBadge}
             <div class="entry-strategy-title" style="color:var(--cyan)">과매도 반등 전략 (역추세 단타)</div>
-            <div class="entry-strategy-title" style="color:var(--yellow);margin-top:10px;margin-bottom:2px;font-size:12px;font-weight:700;">📊 분할 매수 진입가 (ATR 기반)</div>
             <div class="entry-strategy-row">
-                <span class="entry-strategy-label"><span style="background:rgba(34,197,94,.2);color:var(--green);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">1차</span>&nbsp;즉시 진입</span>
-                <span class="entry-strategy-value">${fmtP(e1)} <small style="color:var(--text3)">현재가</small></span>
-            </div>
-            <div class="entry-strategy-row">
-                <span class="entry-strategy-label"><span style="background:rgba(34,197,94,.15);color:var(--green);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">2차</span>&nbsp;ATR ×0.3</span>
-                <span class="entry-strategy-value">${fmtP(e2)} <small style="color:var(--text2)">${fmtPct(e2,price)}</small></span>
-            </div>
-            <div class="entry-strategy-row">
-                <span class="entry-strategy-label"><span style="background:rgba(234,179,8,.15);color:var(--yellow);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">3차</span>&nbsp;ATR ×0.6</span>
-                <span class="entry-strategy-value">${fmtP(e3)} <small style="color:var(--text2)">${fmtPct(e3,price)}</small></span>
-            </div>
-            <div class="entry-strategy-row">
-                <span class="entry-strategy-label"><span style="background:rgba(234,179,8,.12);color:var(--yellow);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">4차</span>&nbsp;ATR ×1.0</span>
-                <span class="entry-strategy-value">${fmtP(e4)} <small style="color:var(--text2)">${fmtPct(e4,price)}</small></span>
-            </div>
-            <div class="entry-strategy-row">
-                <span class="entry-strategy-label"><span style="background:rgba(239,68,68,.15);color:var(--red);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">5차</span>&nbsp;ATR ×1.5</span>
-                <span class="entry-strategy-value">${fmtP(e5)} <small style="color:var(--text2)">${fmtPct(e5,price)}</small></span>
-            </div>
-            <div class="entry-strategy-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">
                 <span class="entry-strategy-label">손절가 (진입봉 저점)</span>
                 <span class="entry-strategy-value" style="color:var(--red)">${sl ? fmtP(sl) : 'N/A'} <small style="color:var(--text2)">${fmtPct(sl,price)}</small></span>
             </div>
@@ -5667,7 +5665,170 @@ Rules:
                 <span class="entry-strategy-value">당일~1일 (빠른 익절)</span>
             </div>`;
 
+        // 분할 매수 계산기에 데이터 전달
+        window._sc = { prices: [e1, e2, e3, e4, e5], tp1, tp2, sl, isKR };
         renderTimingCard('day', 'entry', checks, passCount, totalChecks, stratHtml);
+        renderSplitCalc();
+    }
+
+    // =====================
+    // 분할 매수 계산기
+    // =====================
+    function renderSplitCalc() {
+        const wrap = document.getElementById('splitCalcWrap');
+        if (!wrap) return;
+        const sc = window._sc;
+        if (!sc) { wrap.innerHTML = ''; return; }
+        const isKR = sc.isKR;
+        const unit = isKR ? '원' : 'USD';
+        const ph   = isKR ? '예: 1000000' : 'e.g. 10000';
+        wrap.innerHTML = `
+        <div class="card">
+            <div class="card-title">
+                <span class="dot" style="background:var(--yellow)"></span>분할 매수 계산기
+                <span style="font-size:11px;color:var(--text3);margin-left:auto;font-weight:500;">ATR 기반 5단계 자동 계산</span>
+            </div>
+            <div class="sc-input-grid">
+                <div class="sc-input-group">
+                    <label>총 투자 예산 (${unit})</label>
+                    <input type="number" id="calcBudget" placeholder="${ph}" oninput="_calcSplit()" min="0">
+                </div>
+                <div class="sc-input-group">
+                    <label>1차 투자금액 (${unit})</label>
+                    <input type="number" id="calcFirst" placeholder="${ph}" oninput="_calcSplit()" min="0">
+                </div>
+            </div>
+            <div class="sc-input-group" style="margin-bottom:14px;">
+                <label>비중 방식</label>
+                <select id="calcMode" onchange="_calcSplit()">
+                    <option value="equal">균등 배분 (20% × 5)</option>
+                    <option value="pyramid">역피라미드 — 하락할수록 더 많이 (10·15·20·25·30%)</option>
+                    <option value="front">전방 집중 — 지금 더 많이 (30·25·20·15·10%)</option>
+                </select>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="sc-tbl">
+                    <thead>
+                        <tr>
+                            <th>차수</th>
+                            <th>진입가</th>
+                            <th>투자금액</th>
+                            <th>수량</th>
+                            <th>누적투자</th>
+                            <th>평균매수가</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calcTableBody">
+                        <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;font-size:13px;">💡 총 예산을 입력하면 자동 계산됩니다</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="calcSummary"></div>
+        </div>`;
+    }
+
+    function _calcSplit() {
+        const sc = window._sc;
+        if (!sc) return;
+        const budget   = parseFloat(document.getElementById('calcBudget').value) || 0;
+        const firstAmt = parseFloat(document.getElementById('calcFirst').value)  || 0;
+        const mode     = document.getElementById('calcMode').value;
+
+        if (!budget) {
+            document.getElementById('calcTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;font-size:13px;">💡 총 예산을 입력하면 자동 계산됩니다</td></tr>';
+            document.getElementById('calcSummary').innerHTML = '';
+            return;
+        }
+
+        const isKR  = sc.isKR;
+        const fmtP  = v => isKR ? Math.round(v).toLocaleString()+'원' : '$'+v.toFixed(2);
+        const fmtA  = v => isKR ? Math.round(v).toLocaleString()+'원' : '$'+(v<1000 ? v.toFixed(2) : Math.round(v).toLocaleString());
+        const fmtSh = v => isKR ? Math.round(v).toLocaleString()+'주' : (v>=1 ? v.toFixed(2) : v.toFixed(4))+'주';
+
+        // Allocation weights
+        const allW = { equal:[20,20,20,20,20], pyramid:[10,15,20,25,30], front:[30,25,20,15,10] };
+        const remW = { equal:[25,25,25,25],     pyramid:[15,20,30,35],   front:[35,30,20,15]   };
+
+        let amounts;
+        if (firstAmt > 0) {
+            const rem  = Math.max(0, budget - firstAmt);
+            const rw   = remW[mode];
+            const rwS  = rw.reduce((a,b)=>a+b,0);
+            amounts    = [firstAmt, ...rw.map(w => rem * w / rwS)];
+        } else {
+            amounts = allW[mode].map(w => budget * w / 100);
+        }
+
+        let cumShares = 0, cumInvested = 0;
+        const rows = sc.prices.map((price, i) => {
+            const amt    = amounts[i];
+            const shares = price > 0 ? amt / price : 0;
+            cumShares   += shares;
+            cumInvested += amt;
+            return { price, amt, shares, cumInvested, avgP: cumShares > 0 ? cumInvested / cumShares : 0 };
+        });
+
+        const badges = [
+            'background:rgba(34,197,94,.22);color:var(--green)',
+            'background:rgba(34,197,94,.14);color:var(--green)',
+            'background:rgba(234,179,8,.18);color:var(--yellow)',
+            'background:rgba(234,179,8,.12);color:var(--yellow)',
+            'background:rgba(239,68,68,.18);color:var(--red)'
+        ];
+
+        document.getElementById('calcTableBody').innerHTML = rows.map((r, i) =>
+            `<tr>
+                <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;${badges[i]}">${i+1}차</span></td>
+                <td>${fmtP(r.price)}</td>
+                <td style="font-weight:600">${fmtA(r.amt)}</td>
+                <td style="color:var(--text2)">${fmtSh(r.shares)}</td>
+                <td style="color:var(--text3);font-size:12px">${fmtA(r.cumInvested)}</td>
+                <td style="font-weight:800;color:var(--cyan)">${fmtP(r.avgP)}</td>
+            </tr>`
+        ).join('');
+
+        // Summary
+        const finalAvg = rows[rows.length-1].avgP;
+        const totalSh  = cumShares;
+        const tp1      = sc.tp1;
+        const slPrice  = sc.sl;
+
+        let html = `<div class="sc-summary">
+            <div class="sc-sum-item">
+                <div class="sc-sum-label">총 투자금액</div>
+                <div class="sc-sum-val">${fmtA(budget)}</div>
+            </div>
+            <div class="sc-sum-item">
+                <div class="sc-sum-label">전량 매수시 평균가</div>
+                <div class="sc-sum-val" style="color:var(--cyan)">${fmtP(finalAvg)}</div>
+            </div>`;
+
+        if (tp1 && tp1 > finalAvg) {
+            const profit = (tp1 - finalAvg) * totalSh;
+            const pct    = (tp1 - finalAvg) / finalAvg * 100;
+            html += `<div class="sc-sum-item" style="border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.05);">
+                <div class="sc-sum-label">TP1 (${fmtP(tp1)}) 도달시 수익</div>
+                <div class="sc-sum-val" style="color:var(--green)">+${fmtA(profit)} <small style="font-size:11px">(+${pct.toFixed(1)}%)</small></div>
+            </div>`;
+        }
+        if (slPrice && slPrice < finalAvg) {
+            const loss = (slPrice - finalAvg) * totalSh;
+            const pct  = (slPrice - finalAvg) / finalAvg * 100;
+            html += `<div class="sc-sum-item" style="border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.05);">
+                <div class="sc-sum-label">손절 (${fmtP(slPrice)}) 도달시 손실</div>
+                <div class="sc-sum-val" style="color:var(--red)">${fmtA(loss)} <small style="font-size:11px">(${pct.toFixed(1)}%)</small></div>
+            </div>`;
+        }
+        html += `</div>`;
+
+        if (tp1 && slPrice && tp1 > finalAvg && slPrice < finalAvg) {
+            const rr  = (tp1 - finalAvg) / (finalAvg - slPrice);
+            const col = rr >= 2 ? 'var(--green)' : rr >= 1.5 ? 'var(--yellow)' : 'var(--red)';
+            html += `<div style="text-align:center;margin-top:10px;padding:9px;background:var(--bg3);border-radius:var(--r2);font-size:13px;color:var(--text2);">
+                평균매수가 기준 손익비 <span style="font-weight:800;font-size:16px;color:${col};margin-left:4px;">1 : ${rr.toFixed(2)}</span>
+            </div>`;
+        }
+        document.getElementById('calcSummary').innerHTML = html;
     }
 
     // =====================
@@ -6465,7 +6626,8 @@ Rules:
         manualAnalysisRefresh, pwaInstall,
         handleSearchKeydown, openSearchDropdown, closeSearchDropdown, searchSuggest, levenshtein,
         renderRRAnalysis, _applyRRGate, _isFallingKnife,
-        detectBullishDivergence, _detectOBVPanic
+        detectBullishDivergence, _detectOBVPanic,
+        renderSplitCalc, _calcSplit
     });
     </script>
 </body>
