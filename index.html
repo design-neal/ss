@@ -480,15 +480,18 @@
         @media(min-width:900px){
             .app{max-width:1200px;}
             .stock-hero{padding:32px 32px 24px;}
-            .card{margin:4px 32px;}
+            .card{margin:4px 0px;}
             .tab-content.active{display:grid;grid-template-columns:1fr 440px;gap:0;align-items:start;}
             #tabChart.active{display:block;}
             #tabAnalysis.active{display:block;}
             #tabOptions.active{display:block;}
-            #tabInfo.active{gap:8px;}
+            #tabInfo.active,#tabCompany.active{gap:8px;}
+            #tabInfo .tab-col-left,#tabCompany .tab-col-left{padding-right:0;}
+            #tabInfo .tab-col-right,#tabCompany .tab-col-right{padding-left:0;}
             #tabInfo .tab-col-left .card{margin-right:0;}
             #tabInfo .tab-col-right .card{margin-left:0;}
-            .tab-col-left,.tab-col-right{display:flex;flex-direction:column;}
+            .tab-col-left,.tab-col-right{display:flex;flex-direction:column;padding:0 32px;}
+            #rrAnalysis{padding:0 32px;}
             .tv-chart-wrap{height:650px;}
             .sub-chart-grid{grid-template-columns:1fr 1fr;}
             .sub-chart-grid .card{margin:4px 12px;}
@@ -826,8 +829,8 @@
         @media(min-width:900px){
             .entry-exit-row{gap:8px;}
             .entry-exit-row>.card{margin:4px 0;}
-            .entry-exit-row>.card:first-child{margin-left:32px;}
-            .entry-exit-row>.card:last-child{margin-right:32px;}
+            .entry-exit-row>.card:first-child{margin-left:0;}
+            .entry-exit-row>.card:last-child{margin-right:0;}
         }
 
         /* ===== R/R ANALYSIS CARD ===== */
@@ -5257,20 +5260,10 @@ Rules:
     function renderEntryTiming() {
         renderDayEntry();
         renderSwingEntry();
-        // 낙하하는 칼 감지 시 verdict 상단에 경고 배지 추가 (분석은 유지)
         if (_isFallingKnife()) {
             ['dayEntry','swingEntry'].forEach(id => {
                 const card = document.getElementById(id+'Card');
                 if (card) card.className = 'card entry-card entry-danger';
-                const v = document.getElementById(id+'Verdict');
-                if (v) {
-                    const badge = `<div class="rr-knife-warning" style="margin-bottom:8px;">
-                        <span class="rr-knife-icon">⛔</span>
-                        <div><div class="rr-knife-title">낙하하는 칼 (Falling Knife) 경고</div>
-                        <div class="rr-knife-desc">MA120·MA200 동시 하회 + 5일 하락. 역추세 단타라도 추세 전환 확인 후 진입.</div></div>
-                    </div>`;
-                    v.innerHTML = badge + v.innerHTML;
-                }
             });
         }
     }
