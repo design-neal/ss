@@ -5255,23 +5255,24 @@ Rules:
     // Entry/Exit Timing (단타 + 스윙)
     // ========================================
     function renderEntryTiming() {
+        renderDayEntry();
+        renderSwingEntry();
+        // 낙하하는 칼 감지 시 verdict 상단에 경고 배지 추가 (분석은 유지)
         if (_isFallingKnife()) {
             ['dayEntry','swingEntry'].forEach(id => {
                 const card = document.getElementById(id+'Card');
-                if (!card) return;
-                card.className = 'card entry-card entry-danger';
+                if (card) card.className = 'card entry-card entry-danger';
                 const v = document.getElementById(id+'Verdict');
-                if (v) v.innerHTML = `
-                    <div class="entry-title" style="color:var(--red);margin-top:8px">⛔ 매수 금지 — 낙하하는 칼</div>
-                    <div class="entry-subtitle">MA120·MA200 하회 + 하락 추세 감지. 추세 전환 확인 전 진입 금지.</div>`;
-                ['Meter','Checklist','Strategy'].forEach(s => {
-                    const el = document.getElementById(id+s); if(el) el.innerHTML='';
-                });
+                if (v) {
+                    const badge = `<div class="rr-knife-warning" style="margin-bottom:8px;">
+                        <span class="rr-knife-icon">⛔</span>
+                        <div><div class="rr-knife-title">낙하하는 칼 (Falling Knife) 경고</div>
+                        <div class="rr-knife-desc">MA120·MA200 동시 하회 + 5일 하락. 역추세 단타라도 추세 전환 확인 후 진입.</div></div>
+                    </div>`;
+                    v.innerHTML = badge + v.innerHTML;
+                }
             });
-            return;
         }
-        renderDayEntry();
-        renderSwingEntry();
     }
     function renderExitTiming() {
         renderDayExit();
